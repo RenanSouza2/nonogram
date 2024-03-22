@@ -10,6 +10,8 @@
 #define assert_int(I1, I2) assert(int_test(I1, I2))
 #define assert_int_arr(I1, ...) assert(int_arr_test(I1, __VA_ARGS__))
 
+void int_arr_set(int spaces[], int n, ...);
+
 bool int_test(int i1, int i2);
 bool int_arr_test(int arr[], int n, ...);
 

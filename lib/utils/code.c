@@ -8,6 +8,18 @@
 
 #include "../../utils/clu/bin/header.h"
 
+
+
+void int_arr_set(int spaces[], int n, ...)
+{
+    va_list args;
+    va_start(args, n);
+    for(int i=0; i<n; i++)
+        spaces[i] = va_arg(args, int);
+}
+
+
+
 bool int_test(int i1, int i2)
 {
     if(i1 != i2)
@@ -59,13 +71,9 @@ bool spaces_is_valid(int spaces[])
 
 void spaces_next(int n, int spaces[], int tot)
 {
-    printf("\ngenerating next");
-    getchar();
-
     if(n == 0) 
     {
-        printf("\nInvalidating");
-        spaces[1] = -1;
+        spaces[0] = -1;
         return;
     }
 
@@ -84,6 +92,7 @@ void spaces_generate(int n, int tot)
 {
     if(n == 0) return;
 
+    printf("\n");
     int spaces[n];
     for(spaces_init(n, spaces); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
     {
