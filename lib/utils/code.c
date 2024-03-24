@@ -1,6 +1,10 @@
+#include <stdlib.h>
 #include <string.h>
 
 #include "debug.h"
+#include "../../utils/assert.h"
+
+
 
 #ifdef DEBUG
 
@@ -10,12 +14,42 @@
 
 
 
-void int_arr_set(int spaces[], int n, ...)
+void int_arr_set(int arr[], int n, ...)
 {
     va_list args;
     va_start(args, n);
     for(int i=0; i<n; i++)
-        spaces[i] = va_arg(args, int);
+        arr[i] = va_arg(args, int);
+}
+
+
+
+bool char_test(char c1, char c2)
+{
+    if(c1 != c2)
+    {
+        printf("\n\n\tCHAR ASSERTION ERROR | %d %d", c1, c2);
+        return false;
+    }
+
+    return true;
+}
+
+bool char_arr_test(char arr[], int n, ...)
+{
+    va_list args;
+    va_start(args, n);
+    for(int i=0; i<n; i++)
+    {
+        char c2 = va_arg(args, int);
+        if(!char_test(arr[i], c2))
+        {
+            printf("\n\tCHAR ARR ASSERTION ERROR | CHAR POS");
+            return false;
+        }
+    }
+
+    return true;
 }
 
 
@@ -50,14 +84,38 @@ bool int_arr_test(int arr[], int n, ...)
 
 #endif
 
-int spaces_get_tot(int n, int spaces[])
+
+
+void slot_display(char c)
+{
+    if(c) printf("▓▓");
+    else  printf("░░");
+}
+
+void bar_display(int N, char c[])
+{
+    printf("\n");
+    for(int i=0; i<N; i++)
+        slot_display(c[i]);
+}
+
+void char_m_display(int N, char c[])
+{
+    for(int i=0; i<N; i++)
+        bar_display(N, &c[N * i]);
+}
+
+
+int int_arr_get_tot(int n, int arr[])
 {
     int tot = 0;
     for(int i=0; i<n; i++)
-        tot += spaces[i];
+        tot += arr[i];
 
     return tot;
 }
+
+
 
 void spaces_init(int n, int spaces[])
 {
@@ -77,7 +135,7 @@ void spaces_next(int n, int spaces[], int tot)
         return;
     }
 
-    if(spaces_get_tot(n, spaces) < tot)
+    if(int_arr_get_tot(n, spaces) < tot)
     {
         spaces[n-1]++;
         return;
@@ -88,16 +146,239 @@ void spaces_next(int n, int spaces[], int tot)
     return;
 }
 
-void spaces_generate(int n, int tot)
+
+
+char* bar_create(int N, int n, int spaces[], int bars[])
 {
-    if(n == 0) return;
+    char *b = calloc(N, 1);
+    assert(b);
+    int j = 0;
+    for(int i=0; i<n; i++)
+    {
+        j += spaces[i];
+        memset(&b[j], 1, bars[i]);
+        j += bars[i] + 1;
+    }
+    return b;
+}
+
+
+
+poss_p poss_create(int N, int n, int spaces[], int bars[], poss_p p_next)
+{
+    poss_p p = malloc(sizeof(poss_t));
+    assert(p);
+
+    char *b = bar_create(N, n, spaces, bars);
+    *p = (poss_t){N, b, p_next};
+    return p;
+}
+
+poss_p poss_generate(int N, int n, int bars[])
+{
+    poss_p p = NULL;
+    int spaces[n];
+    int tot = N + 1 - n - int_arr_get_tot(n, bars);
+    for(spaces_init(n, spaces); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
+        p = poss_create(N, n, spaces, bars, p);
+
+    return p;
+}
+
+poss_p poss_filter(poss_p p, int i, char val)
+{
+    if(p == NULL) return NULL;
+
+    poss_p p_next = poss_filter(p->p, i, val);
+
+    if(p->b[i] == val)
+    {
+        p->p = p_next;
+        return p;
+    }
+
+    free(p);
+    return p_next;
+}
+
+char poss_verify_rec(poss_p p, int i, int val)
+{
+    if(p == NULL) return val;
+
+    if(p->b[i] != val) return -1;
+
+    return poss_verify_rec(p->p, i, val);
+}
+
+char poss_verify(poss_p p, int i)
+{
+    return poss_verify_rec(p->p, i, p->b[i]);
+}
+
+
+
+char char_m_get(char *c, int N, int i, int j)
+{
+    return c[i * N + j];
+}
+
+void char_m_set(char *c, int N, int i, int j, char val)
+{
+    c[i * N + j] = val;
+}
+
+
+
+bool table_scan_line(table_p t, int i);
+bool table_scan_column(table_p t, int j);
+
+bool table_set_line(table_p t, int i, int j, char val)
+{
+    t->rem--;
+    char_m_set(t->cmp, t->N, i, j, 1);
+    char_m_set(t->res, t->N, i, j, val);
+    if(t->rem == 0) return true;
+
+    t->l[i] = poss_filter(t->l[i], j, val);
+    return table_scan_column(t, j);
+}
+
+bool table_set_column(table_p t, int i, int j, char val)
+{
+    t->rem--;
+    char_m_set(t->cmp, t->N, i, j, 1);
+    char_m_set(t->res, t->N, i, j, val);
+    if(t->rem == 0) return true;
+
+    t->c[j] = poss_filter(t->c[j], i, val);
+    return table_scan_line(t, j);
+}
+
+
+
+bool table_scan_line(table_p t, int i)
+{
+    for(int j=0; j<t->N; j++)
+    {
+        if(char_m_get(t->cmp, t->N, i, j)) continue;
+
+        char val = poss_verify(t->l[i], j);
+        if(val < 0) continue;
+
+        if(table_set_column(t, i, j, val)) return true;
+    }
+
+    return false;
+}
+
+bool table_scan_column(table_p t, int j)
+{
+    for(int i=0; i<t->N; i++)
+    {
+        if(char_m_get(t->cmp, t->N, i, j)) continue;
+
+        char val = poss_verify(t->c[j], i);
+        if(val < 0) continue;
+
+        if(table_set_line(t, i, j, val)) return true;
+    }
+
+    return false;
+}
+
+
+
+void table_solve(table_p t)
+{
+    while(t->rem)
+    {
+        for(int i=0; i<t->N; i++)
+            if(table_scan_line(t, i)) 
+                return;
+
+        for(int j=0; j<t->N; j++)
+            if(table_scan_column(t, j)) 
+                return;
+    }
+}
+
+
+
+FILE* file_open(char name[])
+{
+    FILE *fp = fopen(name, "r");
+    assert(fp);
+    return fp;
+}
+
+char char_read(FILE *fp)
+{
+    char c;
+    fscanf(fp, "%c", &c);
+    return c;
+}
+
+int int_read(FILE *fp)
+{
+    int i;
+    fscanf(fp, "%d", &i);
+    return i;
+}
+
+int bars_read(int bars[], FILE *fp)
+{
+    for(int n=0; ;n++)
+    {
+        bars[n] = int_read(fp);
+
+        if(char_read(fp) == '\n')
+            return n + 1;
+    }
+}
+
+poss_p* poss_arr_create(int N)
+{
+    poss_p *p = malloc(N * sizeof(poss_p));
+    assert(p);
+    return p;
+}
+
+char* char_m_create(int N)
+{
+    char *c = malloc(N*N);
+    assert(c);
+    return c;
+}
+
+void table_read(table_p t, char name[])
+{
+    FILE *fp = file_open(name);
+
+    int N = int_read(fp);
+    char_read(fp);
+
+    poss_p *l = poss_arr_create(N);
+    poss_p *c = poss_arr_create(N);
+
+    char* cmp = char_m_create(N);
+    char* res = char_m_create(N);
+
+    int rem = N * N;
+
+    int bars[N/2 + 1];
+    for(int i=0; i<N; i++)
+    {
+        int n = bars_read(bars, fp);
+        l[i] = poss_generate(N, n, bars);
+    }
 
     printf("\n");
-    int spaces[n];
-    for(spaces_init(n, spaces); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
+
+    for(int j=0; j<N; j++)
     {
-        printf("\n res %d", spaces[0]);
-        for(int i=1; i<n; i++)
-            printf(" %d", spaces[i]);
+        int n = bars_read(bars, fp);
+        c[j] = poss_generate(N, n, bars);
     }
+
+    *t = (table_t){N, l, c, cmp, res, rem};
 }
