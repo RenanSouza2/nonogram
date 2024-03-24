@@ -22,6 +22,7 @@ bool int_arr_test(int arr[], int n, ...);
 
 #endif
 
+char char_m_get(char *c, int N, int i, int j);
 int int_arr_get_tot(int n, int spaces[]);
 void spaces_init(int n, int spaces[]);
 bool spaces_is_valid(int spaces[]);

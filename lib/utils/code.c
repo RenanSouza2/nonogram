@@ -105,6 +105,19 @@ void char_m_display(int N, char c[])
         bar_display(N, &c[N * i]);
 }
 
+void table_display(table_p t)
+{
+    for(int i=0; i<t->N; i++)
+    {
+        printf("\n");
+        for(int j=0; j<t->N; j++)
+        {
+            if(char_m_get(t->cmp, t->N, i, j)) slot_display(char_m_get(t->res, t->N, i, j));
+            else printf("  ");
+        }
+    }
+}
+
 
 int int_arr_get_tot(int n, int arr[])
 {
@@ -237,6 +250,8 @@ bool table_set_line(table_p t, int i, int j, char val)
     t->rem--;
     char_m_set(t->cmp, t->N, i, j, 1);
     char_m_set(t->res, t->N, i, j, val);
+    table_display(t);
+    getchar();
     if(t->rem == 0) return true;
 
     t->l[i] = poss_filter(t->l[i], j, val);
@@ -248,6 +263,8 @@ bool table_set_column(table_p t, int i, int j, char val)
     t->rem--;
     char_m_set(t->cmp, t->N, i, j, 1);
     char_m_set(t->res, t->N, i, j, val);
+    table_display(t);
+    getchar();
     if(t->rem == 0) return true;
 
     t->c[j] = poss_filter(t->c[j], i, val);
