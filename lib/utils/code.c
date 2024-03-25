@@ -1,10 +1,13 @@
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "debug.h"
 #include "../../utils/assert.h"
 
 
+
+#define clrscr() printf("\e[1;1H\e[2J")
 
 #ifdef DEBUG
 
@@ -250,8 +253,12 @@ bool table_set_line(table_p t, int i, int j, char val)
     t->rem--;
     char_m_set(t->cmp, t->N, i, j, 1);
     char_m_set(t->res, t->N, i, j, val);
+
+    clrscr();
     table_display(t);
-    getchar();
+    struct timespec spec = (struct timespec){0, 1e8};
+    nanosleep(&spec, NULL);
+
     if(t->rem == 0) return true;
 
     t->l[i] = poss_filter(t->l[i], j, val);
@@ -263,8 +270,12 @@ bool table_set_column(table_p t, int i, int j, char val)
     t->rem--;
     char_m_set(t->cmp, t->N, i, j, 1);
     char_m_set(t->res, t->N, i, j, val);
+
+    clrscr();
     table_display(t);
-    getchar();
+    struct timespec spec = (struct timespec){0, 1e8};
+    nanosleep(&spec, NULL);
+    
     if(t->rem == 0) return true;
 
     t->c[j] = poss_filter(t->c[j], i, val);
