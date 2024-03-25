@@ -22,6 +22,9 @@ bool int_arr_test(int arr[], int n, ...);
 
 #endif
 
+bool table_scan_line(table_p t, int i);
+bool table_scan_column(table_p t, int j);
+
 char char_m_get(char *c, int N, int i, int j);
 int int_arr_get_tot(int n, int spaces[]);
 void spaces_init(int n, int spaces[]);

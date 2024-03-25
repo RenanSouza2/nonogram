@@ -201,11 +201,11 @@ poss_p poss_generate(int N, int n, int bars[])
     return p;
 }
 
-poss_p poss_filter(poss_p p, int i, char val)
+poss_p poss_filter_rec(poss_p p, int i, char val)
 {
     if(p == NULL) return NULL;
 
-    poss_p p_next = poss_filter(p->p, i, val);
+    poss_p p_next = poss_filter_rec(p->p, i, val);
 
     if(p->b[i] == val)
     {
@@ -215,6 +215,13 @@ poss_p poss_filter(poss_p p, int i, char val)
 
     free(p);
     return p_next;
+}
+
+poss_p poss_filter(poss_p p, int i, char val)
+{
+    p = poss_filter_rec(p, i, val);
+    assert(p);
+    return p;
 }
 
 char poss_verify_rec(poss_p p, int i, int val)
@@ -245,8 +252,13 @@ void char_m_set(char *c, int N, int i, int j, char val)
 
 
 
-bool table_scan_line(table_p t, int i);
-bool table_scan_column(table_p t, int j);
+void step(table_p t)
+{
+    clrscr();
+    table_display(t);
+    struct timespec spec = (struct timespec){0, 2e7};
+    nanosleep(&spec, NULL);
+}
 
 bool table_set_line(table_p t, int i, int j, char val)
 {
@@ -254,11 +266,8 @@ bool table_set_line(table_p t, int i, int j, char val)
     char_m_set(t->cmp, t->N, i, j, 1);
     char_m_set(t->res, t->N, i, j, val);
 
-    clrscr();
-    table_display(t);
-    struct timespec spec = (struct timespec){0, 1e8};
-    nanosleep(&spec, NULL);
-
+    step(t);
+    // printf("\nset line %d %d", i, j);
     if(t->rem == 0) return true;
 
     t->l[i] = poss_filter(t->l[i], j, val);
@@ -271,11 +280,8 @@ bool table_set_column(table_p t, int i, int j, char val)
     char_m_set(t->cmp, t->N, i, j, 1);
     char_m_set(t->res, t->N, i, j, val);
 
-    clrscr();
-    table_display(t);
-    struct timespec spec = (struct timespec){0, 1e8};
-    nanosleep(&spec, NULL);
-    
+    step(t);
+    // printf("\ncolumn line %d %d", i, j);
     if(t->rem == 0) return true;
 
     t->c[j] = poss_filter(t->c[j], i, val);
