@@ -7,6 +7,6 @@ PLACEHOLDER(table);
 
 void table_read(table_p t, char name[]);
 void table_solve(table_p t);
-void char_m_display(int N, char c[]);
+void table_display(table_p t);
 
 #endif

@@ -17,7 +17,7 @@
 
 
 
-void int_arr_set(int arr[], int n, ...)
+void int_arr_init(int arr[], int n, ...)
 {
     va_list args;
     va_start(args, n);
@@ -25,6 +25,18 @@ void int_arr_set(int arr[], int n, ...)
         arr[i] = va_arg(args, int);
 }
 
+
+poss_p poss_init_immed(int N, int n, ...)
+{
+    va_list args;
+    va_start(args, n);
+    
+    poss_p p = NULL;
+    for(int i=0; i<n; i++)
+    {
+        char _
+    }
+}
 
 
 bool char_test(char c1, char c2)
@@ -122,7 +134,8 @@ void table_display(table_p t)
 }
 
 
-int int_arr_get_tot(int n, int arr[])
+
+int int_arr_get_sum(int n, int arr[])
 {
     int tot = 0;
     for(int i=0; i<n; i++)
@@ -151,7 +164,7 @@ void spaces_next(int n, int spaces[], int tot)
         return;
     }
 
-    if(int_arr_get_tot(n, spaces) < tot)
+    if(int_arr_get_sum(n, spaces) < tot)
     {
         spaces[n-1]++;
         return;
@@ -164,10 +177,8 @@ void spaces_next(int n, int spaces[], int tot)
 
 
 
-char* bar_create(int N, int n, int spaces[], int bars[])
+void bar_create(char b[], int n, int spaces[], int bars[])
 {
-    char *b = calloc(N, 1);
-    assert(b);
     int j = 0;
     for(int i=0; i<n; i++)
     {
@@ -180,21 +191,36 @@ char* bar_create(int N, int n, int spaces[], int bars[])
 
 
 
-poss_p poss_create(int N, int n, int spaces[], int bars[], poss_p p_next)
+poss_p poss_create_memory(int N, poss_p p_next)
 {
+    char *b = calloc(N, 1);
+    assert(b);
+
     poss_p p = malloc(sizeof(poss_t));
     assert(p);
 
-    char *b = bar_create(N, n, spaces, bars);
     *p = (poss_t){N, b, p_next};
     return p;
+}
+
+poss_p poss_create(int N, int n, int spaces[], int bars[], poss_p p_next)
+{
+    poss_p p = poss_create_memory(N, p_next);
+    bar_create(p->b, n, spaces, bars);
+    return p;
+}
+
+void poss_free(poss_p p)
+{
+    free(p->b);
+    free(p);
 }
 
 poss_p poss_generate(int N, int n, int bars[])
 {
     poss_p p = NULL;
     int spaces[n];
-    int tot = N + 1 - n - int_arr_get_tot(n, bars);
+    int tot = N + 1 - n - int_arr_get_sum(n, bars);
     for(spaces_init(n, spaces); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
         p = poss_create(N, n, spaces, bars, p);
 
@@ -217,26 +243,33 @@ poss_p poss_filter_rec(poss_p p, int i, char val)
     return p_next;
 }
 
-poss_p poss_filter(poss_p p, int i, char val)
+void poss_filter(poss_p *p, int i, char val)
 {
-    p = poss_filter_rec(p, i, val);
-    assert(p);
-    return p;
-}
-
-char poss_verify_rec(poss_p p, int i, int val)
-{
-    if(p == NULL) return val;
-
-    if(p->b[i] != val) return -1;
-
-    return poss_verify_rec(p->p, i, val);
+    while(*p)
+    {
+        if((*p)->b[i] == val)
+        {
+            p = &(*p)->p;
+        }
+        else
+        {
+            poss_p p_aux = (*p)->p;
+            *p = p_aux;
+            poss_free(p_aux);
+        }
+    }
 }
 
 char poss_verify(poss_p p, int i)
 {
-    return poss_verify_rec(p->p, i, p->b[i]);
+    char val = p->b[i];
+    for(p = p->p; p; p = p->p)
+        if(p->b[i] != val)
+            return -1;
+
+    return val;
 }
+
 
 
 
@@ -270,7 +303,7 @@ bool table_set_line(table_p t, int i, int j, char val)
     // printf("\nset line %d %d", i, j);
     if(t->rem == 0) return true;
 
-    t->l[i] = poss_filter(t->l[i], j, val);
+    poss_filter(&t->l[i], j, val);
     return table_scan_column(t, j);
 }
 
@@ -284,7 +317,7 @@ bool table_set_column(table_p t, int i, int j, char val)
     // printf("\ncolumn line %d %d", i, j);
     if(t->rem == 0) return true;
 
-    t->c[j] = poss_filter(t->c[j], i, val);
+    poss_filter(&t->c[j], i, val);
     return table_scan_line(t, j);
 }
 
@@ -327,12 +360,16 @@ void table_solve(table_p t)
     while(t->rem)
     {
         for(int i=0; i<t->N; i++)
+        {
             if(table_scan_line(t, i)) 
                 return;
+        }
 
         for(int j=0; j<t->N; j++)
+        {
             if(table_scan_column(t, j)) 
                 return;
+        }
     }
 }
 
@@ -405,8 +442,6 @@ void table_read(table_p t, char name[])
         int n = bars_read(bars, fp);
         l[i] = poss_generate(N, n, bars);
     }
-
-    printf("\n");
 
     for(int j=0; j<N; j++)
     {

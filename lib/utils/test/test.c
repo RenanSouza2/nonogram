@@ -9,10 +9,10 @@ void test_utils_int_arr_get_tot()
     printf("\n\t%s", __func__);
 
     int spaces[] = {0, 1, 2, 3};
-    assert_int(int_arr_get_tot(1, spaces), 0);
-    assert_int(int_arr_get_tot(2, spaces), 1);
-    assert_int(int_arr_get_tot(3, spaces), 3);
-    assert_int(int_arr_get_tot(4, spaces), 6);
+    assert_int(int_arr_get_sum(1, spaces), 0);
+    assert_int(int_arr_get_sum(2, spaces), 1);
+    assert_int(int_arr_get_sum(3, spaces), 3);
+    assert_int(int_arr_get_sum(4, spaces), 6);
 
     assert(clu_mem_empty());
 }
@@ -61,11 +61,11 @@ void test_utils_spaces_next()
     spaces_next(0, spaces, 0);
     assert_int_arr(spaces, 1, -1);
 
-    int_arr_set(spaces, 1, 0);
+    int_arr_init(spaces, 1, 0);
     spaces_next(1, spaces, 0);
     assert_int_arr(spaces, 1, -1);
 
-    int_arr_set(spaces, 1, 0);
+    int_arr_init(spaces, 1, 0);
     spaces_next(1, spaces, 1);
     assert_int_arr(spaces, 1, 1);
 
@@ -84,18 +84,18 @@ void test_utils_bar_create()
     assert_char_arr(b, 5, 1, 0, 0, 0, 0)
     free(b);
 
-    int_arr_set(spaces, 1, 1);
+    int_arr_init(spaces, 1, 1);
     b = bar_create(5, 1, spaces, bars);
     assert_char_arr(b, 5, 0, 1, 0, 0, 0)
     free(b);
 
-    int_arr_set(spaces, 1, 4);
+    int_arr_init(spaces, 1, 4);
     b = bar_create(5, 1, spaces, bars);
     assert_char_arr(b, 5, 0, 0, 0, 0, 1)
     free(b);
 
-    int_arr_set(spaces, 2, 0, 0);
-    int_arr_set(bars, 2, 1, 1);
+    int_arr_init(spaces, 2, 0, 0);
+    int_arr_init(bars, 2, 1, 1);
     b = bar_create(5, 2, spaces, bars);
     assert_char_arr(b, 5, 1, 0, 1, 0, 0)
     free(b);
@@ -103,6 +103,15 @@ void test_utils_bar_create()
     assert(clu_mem_empty());
 }
 
+
+void test_utils_poss_filter()
+{
+    printf("\n\t%s", __func__);
+
+    poss_p p = poss_init_immed()
+
+    assert(clu_mem_empty());
+}
 
 
 void test_utils()
@@ -116,6 +125,8 @@ void test_utils()
     test_utils_spaces_next();
 
     test_utils_bar_create();
+
+    test_utils_poss_filter();
 
     assert(clu_mem_empty());
 }
