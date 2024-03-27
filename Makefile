@@ -1,9 +1,6 @@
 SRC = src
 LIB = lib
 
-run:
-	$(MAKE) --directory=$(SRC) -s
-
 build b:
 	$(MAKE) build --directory=$(SRC) -s
 	
