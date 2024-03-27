@@ -80,24 +80,24 @@ void test_utils_bar_create()
 
     int spaces[4] = {0};
     int bars[4] = {1};
-    char *b = bar_create(5, 1, spaces, bars);
-    assert_char_arr(b, 5, 1, 0, 0, 0, 0)
+    char *b = bit_arr_create(5, 1, spaces, bars);
+    assert_char_arr(b, "10000");
     free(b);
 
     int_arr_init(spaces, 1, 1);
-    b = bar_create(5, 1, spaces, bars);
-    assert_char_arr(b, 5, 0, 1, 0, 0, 0)
+    b = bit_arr_create(5, 1, spaces, bars);
+    assert_char_arr(b, "01000");
     free(b);
 
     int_arr_init(spaces, 1, 4);
-    b = bar_create(5, 1, spaces, bars);
-    assert_char_arr(b, 5, 0, 0, 0, 0, 1)
+    b = bit_arr_create(5, 1, spaces, bars);
+    assert_char_arr(b, "00001");
     free(b);
 
     int_arr_init(spaces, 2, 0, 0);
     int_arr_init(bars, 2, 1, 1);
-    b = bar_create(5, 2, spaces, bars);
-    assert_char_arr(b, 5, 1, 0, 1, 0, 0)
+    b = bit_arr_create(5, 2, spaces, bars);
+    assert_char_arr(b, "10100");
     free(b);
 
     assert(clu_mem_empty());
@@ -108,7 +108,7 @@ void test_utils_poss_filter()
 {
     printf("\n\t%s", __func__);
 
-    poss_p p = poss_init_immed()
+    // poss_p p = poss_init_immed()
 
     assert(clu_mem_empty());
 }

@@ -16,6 +16,17 @@
 #include "../../utils/clu/bin/header.h"
 
 
+char* bit_arr_init(char str[])
+{
+    int N = strlen(str);
+    char *b = malloc(N);
+    assert(b);
+
+    for(int i=0; i<N; i++)
+        b[i] = str[i] == '0' ? 0 : 1;
+
+    return b;
+}
 
 void int_arr_init(int arr[], int n, ...)
 {
@@ -26,6 +37,7 @@ void int_arr_init(int arr[], int n, ...)
 }
 
 
+
 poss_p poss_init_immed(int N, int n, ...)
 {
     va_list args;
@@ -34,8 +46,14 @@ poss_p poss_init_immed(int N, int n, ...)
     poss_p p = NULL;
     for(int i=0; i<n; i++)
     {
-        char _
+        char *str = va_arg(args, char*);
+        assert(strlen(str) == N);
+
+        char *b = bit_arr_init(str);
+        p = poss_create(N, b, p);
     }
+
+    return p;
 }
 
 
@@ -50,19 +68,18 @@ bool char_test(char c1, char c2)
     return true;
 }
 
-bool char_arr_test(char arr[], int n, ...)
+bool bit_arr_test(char b1[], char str[])
 {
-    va_list args;
-    va_start(args, n);
-    for(int i=0; i<n; i++)
+    char *b2 = bit_arr_init(str);
+    for(int i=0; i<strlen(str); i++)
     {
-        char c2 = va_arg(args, int);
-        if(!char_test(arr[i], c2))
+        if(!char_test(b1[i], b2[i]))
         {
             printf("\n\tCHAR ARR ASSERTION ERROR | CHAR POS");
             return false;
         }
     }
+    free(b2);
 
     return true;
 }
@@ -80,14 +97,14 @@ bool int_test(int i1, int i2)
     return true;
 }
 
-bool int_arr_test(int arr[], int n, ...)
+bool int_arr_test(int spaces[], int n, ...)
 {
     va_list args;
     va_start(args, n);
     for(int i=0; i<n; i++)
     {
         int i2 = va_arg(args, int);
-        if(!int_test(arr[i], i2))
+        if(!int_test(spaces[i], i2))
         {
             printf("\n\tINT ARR ASSERTION ERROR | INT POS");
             return false;
@@ -101,23 +118,23 @@ bool int_arr_test(int arr[], int n, ...)
 
 
 
-void slot_display(char c)
+void bit_display(char c)
 {
     if(c) printf("▓▓");
     else  printf("░░");
 }
 
-void bar_display(int N, char c[])
+void bit_arr_display(int N, char c[])
 {
     printf("\n");
     for(int i=0; i<N; i++)
-        slot_display(c[i]);
+        bit_display(c[i]);
 }
 
-void char_m_display(int N, char c[])
+void bit_m_display(int N, char c[])
 {
     for(int i=0; i<N; i++)
-        bar_display(N, &c[N * i]);
+        bit_arr_display(N, &c[N * i]);
 }
 
 void table_display(table_p t)
@@ -127,7 +144,7 @@ void table_display(table_p t)
         printf("\n");
         for(int j=0; j<t->N; j++)
         {
-            if(char_m_get(t->cmp, t->N, i, j)) slot_display(char_m_get(t->res, t->N, i, j));
+            if(char_m_get(t->cmp, t->N, i, j)) bit_display(char_m_get(t->res, t->N, i, j));
             else printf("  ");
         }
     }
@@ -177,8 +194,11 @@ void spaces_next(int n, int spaces[], int tot)
 
 
 
-void bar_create(char b[], int n, int spaces[], int bars[])
+char* bit_arr_create(int N, int n, int spaces[], int bars[])
 {
+    char *b = calloc(N, 1);
+    assert(b);
+
     int j = 0;
     for(int i=0; i<n; i++)
     {
@@ -191,22 +211,12 @@ void bar_create(char b[], int n, int spaces[], int bars[])
 
 
 
-poss_p poss_create_memory(int N, poss_p p_next)
+poss_p poss_create(int N, char *b, poss_p p_next)
 {
-    char *b = calloc(N, 1);
-    assert(b);
-
     poss_p p = malloc(sizeof(poss_t));
     assert(p);
 
     *p = (poss_t){N, b, p_next};
-    return p;
-}
-
-poss_p poss_create(int N, int n, int spaces[], int bars[], poss_p p_next)
-{
-    poss_p p = poss_create_memory(N, p_next);
-    bar_create(p->b, n, spaces, bars);
     return p;
 }
 
@@ -222,25 +232,12 @@ poss_p poss_generate(int N, int n, int bars[])
     int spaces[n];
     int tot = N + 1 - n - int_arr_get_sum(n, bars);
     for(spaces_init(n, spaces); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
-        p = poss_create(N, n, spaces, bars, p);
-
-    return p;
-}
-
-poss_p poss_filter_rec(poss_p p, int i, char val)
-{
-    if(p == NULL) return NULL;
-
-    poss_p p_next = poss_filter_rec(p->p, i, val);
-
-    if(p->b[i] == val)
     {
-        p->p = p_next;
-        return p;
+        char *b = bit_arr_create(N, n, spaces, bars);
+        p = poss_create(N, b, p);
     }
 
-    free(p);
-    return p_next;
+    return p;
 }
 
 void poss_filter(poss_p *p, int i, char val)
