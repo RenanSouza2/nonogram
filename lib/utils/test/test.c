@@ -61,11 +61,11 @@ void test_utils_spaces_next()
     spaces_next(0, spaces, 0);
     assert_int_arr(spaces, 1, -1);
 
-    int_arr_init(spaces, 1, 0);
+    int_arr_init_immed(spaces, 1, 0);
     spaces_next(1, spaces, 0);
     assert_int_arr(spaces, 1, -1);
 
-    int_arr_init(spaces, 1, 0);
+    int_arr_init_immed(spaces, 1, 0);
     spaces_next(1, spaces, 1);
     assert_int_arr(spaces, 1, 1);
 
@@ -84,18 +84,18 @@ void test_utils_bar_create()
     assert_char_arr(b, "10000");
     free(b);
 
-    int_arr_init(spaces, 1, 1);
+    int_arr_init_immed(spaces, 1, 1);
     b = bit_arr_create(5, 1, spaces, bars);
     assert_char_arr(b, "01000");
     free(b);
 
-    int_arr_init(spaces, 1, 4);
+    int_arr_init_immed(spaces, 1, 4);
     b = bit_arr_create(5, 1, spaces, bars);
     assert_char_arr(b, "00001");
     free(b);
 
-    int_arr_init(spaces, 2, 0, 0);
-    int_arr_init(bars, 2, 1, 1);
+    int_arr_init_immed(spaces, 2, 0, 0);
+    int_arr_init_immed(bars, 2, 1, 1);
     b = bit_arr_create(5, 2, spaces, bars);
     assert_char_arr(b, "10100");
     free(b);
@@ -108,7 +108,15 @@ void test_utils_poss_filter()
 {
     printf("\n\t%s", __func__);
 
-    // poss_p p = poss_init_immed()
+    poss_p p = poss_init_immed(1, 1, "0");
+    poss_filter(&p, 0, 0);
+    assert(poss_test(p, 1, 1, "0"));
+    poss_free_list(p);
+
+    p = poss_init_immed(1, 2, "0", "1");
+    poss_filter(&p, 0, 0);
+    assert(poss_test(p, 1, 1, "0"));
+    poss_free_list(p);
 
     assert(clu_mem_empty());
 }

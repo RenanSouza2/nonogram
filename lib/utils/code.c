@@ -28,7 +28,7 @@ char* bit_arr_init(char str[])
     return b;
 }
 
-void int_arr_init(int arr[], int n, ...)
+void int_arr_init_immed(int arr[], int n, ...)
 {
     va_list args;
     va_start(args, n);
@@ -114,6 +114,37 @@ bool int_arr_test(int spaces[], int n, ...)
     return true;
 }
 
+bool poss_test(poss_p p1, int N, int n, ...)
+{
+    va_list args;
+    va_start(args, n);
+    
+    int i=0;
+    for(; p1; p1 = p1->p, i++)
+    {
+        char *str = va_arg(args, char*);
+        if(!bit_arr_test(p1->b, str))
+        {
+            printf("\n\tPOSS ASSERTION ERROR | BIT ARR ERROR | %d", i);
+            return false;
+        }
+    }
+
+    if(i < n)
+    {
+        printf("\n\n\tPOSS ASSERTION ERROR | LIST SHORTER | %d %d", i, n);
+        return false;
+    }
+
+    if(p1)
+    {
+        printf("\n\n\tPOSS ASSERTION ERROR | LIST LONGER | %d", i);
+        return false;
+    }
+
+    return true;
+}
+
 #endif
 
 
@@ -144,7 +175,7 @@ void table_display(table_p t)
         printf("\n");
         for(int j=0; j<t->N; j++)
         {
-            if(char_m_get(t->cmp, t->N, i, j)) bit_display(char_m_get(t->res, t->N, i, j));
+            if(bit_m_get(t->cmp, t->N, i, j)) bit_display(bit_m_get(t->res, t->N, i, j));
             else printf("  ");
         }
     }
@@ -216,14 +247,21 @@ poss_p poss_create(int N, char *b, poss_p p_next)
     poss_p p = malloc(sizeof(poss_t));
     assert(p);
 
-    *p = (poss_t){N, b, p_next};
+    *p = (poss_t){b, p_next};
     return p;
 }
 
-void poss_free(poss_p p)
+poss_p poss_free(poss_p p)
 {
+    poss_p p_next = p->p;
     free(p->b);
     free(p);
+    return p_next;
+}
+
+void poss_free_list(poss_p p)
+{
+    while(p) p = poss_free(p);
 }
 
 poss_p poss_generate(int N, int n, int bars[])
@@ -251,8 +289,8 @@ void poss_filter(poss_p *p, int i, char val)
         else
         {
             poss_p p_aux = (*p)->p;
+            poss_free(*p);
             *p = p_aux;
-            poss_free(p_aux);
         }
     }
 }
@@ -270,12 +308,12 @@ char poss_verify(poss_p p, int i)
 
 
 
-char char_m_get(char *c, int N, int i, int j)
+char bit_m_get(char *c, int N, int i, int j)
 {
     return c[i * N + j];
 }
 
-void char_m_set(char *c, int N, int i, int j, char val)
+void bit_m_set(char *c, int N, int i, int j, char val)
 {
     c[i * N + j] = val;
 }
@@ -293,8 +331,8 @@ void step(table_p t)
 bool table_set_line(table_p t, int i, int j, char val)
 {
     t->rem--;
-    char_m_set(t->cmp, t->N, i, j, 1);
-    char_m_set(t->res, t->N, i, j, val);
+    bit_m_set(t->cmp, t->N, i, j, 1);
+    bit_m_set(t->res, t->N, i, j, val);
 
     step(t);
     // printf("\nset line %d %d", i, j);
@@ -307,8 +345,8 @@ bool table_set_line(table_p t, int i, int j, char val)
 bool table_set_column(table_p t, int i, int j, char val)
 {
     t->rem--;
-    char_m_set(t->cmp, t->N, i, j, 1);
-    char_m_set(t->res, t->N, i, j, val);
+    bit_m_set(t->cmp, t->N, i, j, 1);
+    bit_m_set(t->res, t->N, i, j, val);
 
     step(t);
     // printf("\ncolumn line %d %d", i, j);
@@ -324,7 +362,7 @@ bool table_scan_line(table_p t, int i)
 {
     for(int j=0; j<t->N; j++)
     {
-        if(char_m_get(t->cmp, t->N, i, j)) continue;
+        if(bit_m_get(t->cmp, t->N, i, j)) continue;
 
         char val = poss_verify(t->l[i], j);
         if(val < 0) continue;
@@ -339,7 +377,7 @@ bool table_scan_column(table_p t, int j)
 {
     for(int i=0; i<t->N; i++)
     {
-        if(char_m_get(t->cmp, t->N, i, j)) continue;
+        if(bit_m_get(t->cmp, t->N, i, j)) continue;
 
         char val = poss_verify(t->c[j], i);
         if(val < 0) continue;
@@ -411,7 +449,7 @@ poss_p* poss_arr_create(int N)
     return p;
 }
 
-char* char_m_create(int N)
+char* bit_m_create(int N)
 {
     char *c = malloc(N*N);
     assert(c);
@@ -428,8 +466,8 @@ void table_read(table_p t, char name[])
     poss_p *l = poss_arr_create(N);
     poss_p *c = poss_arr_create(N);
 
-    char* cmp = char_m_create(N);
-    char* res = char_m_create(N);
+    char* cmp = bit_m_create(N);
+    char* res = bit_m_create(N);
 
     int rem = N * N;
 

@@ -5,7 +5,6 @@
 
 STRUCT(poss)
 {
-    int N;
     char *b;
     poss_p p;
 };

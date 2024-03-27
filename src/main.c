@@ -19,7 +19,6 @@ int main(int argc, char **argv)
     table_t t;
     table_read(&t, name);
     table_solve(&t);
-    table_display(&t);
 
     printf("\n");
     return 0;
