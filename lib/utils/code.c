@@ -8,6 +8,7 @@
 
 
 #define clrscr() printf("\e[1;1H\e[2J")
+// #define clrscr()
 
 #ifdef DEBUG
 
@@ -151,8 +152,12 @@ bool poss_test(poss_p p1, int N, int n, ...)
 
 void bit_display(char c)
 {
-    if(c) printf("▓▓");
-    else  printf("░░");
+    switch (c)
+    {
+        case -1: printf("  "); return;
+        case  0: printf("░░"); return;
+        case  1: printf("▓▓"); return;
+    }
 }
 
 void bit_arr_display(int N, char c[])
@@ -170,15 +175,7 @@ void bit_m_display(int N, char c[])
 
 void table_display(table_p t)
 {
-    for(int i=0; i<t->N; i++)
-    {
-        printf("\n");
-        for(int j=0; j<t->N; j++)
-        {
-            if(bit_m_get(t->cmp, t->N, i, j)) bit_display(bit_m_get(t->res, t->N, i, j));
-            else printf("  ");
-        }
-    }
+    bit_m_display(t->N, t->res);
 }
 
 
@@ -324,14 +321,13 @@ void step(table_p t)
 {
     clrscr();
     table_display(t);
-    struct timespec spec = (struct timespec){0, 2e7};
+    struct timespec spec = (struct timespec){0, 5e6};
     nanosleep(&spec, NULL);
 }
 
 bool table_set_line(table_p t, int i, int j, char val)
 {
     t->rem--;
-    bit_m_set(t->cmp, t->N, i, j, 1);
     bit_m_set(t->res, t->N, i, j, val);
 
     step(t);
@@ -345,7 +341,6 @@ bool table_set_line(table_p t, int i, int j, char val)
 bool table_set_column(table_p t, int i, int j, char val)
 {
     t->rem--;
-    bit_m_set(t->cmp, t->N, i, j, 1);
     bit_m_set(t->res, t->N, i, j, val);
 
     step(t);
@@ -353,7 +348,7 @@ bool table_set_column(table_p t, int i, int j, char val)
     if(t->rem == 0) return true;
 
     poss_filter(&t->c[j], i, val);
-    return table_scan_line(t, j);
+    return table_scan_line(t, i);
 }
 
 
@@ -362,7 +357,7 @@ bool table_scan_line(table_p t, int i)
 {
     for(int j=0; j<t->N; j++)
     {
-        if(bit_m_get(t->cmp, t->N, i, j)) continue;
+        if(bit_m_get(t->res, t->N, i, j) >= 0) continue;
 
         char val = poss_verify(t->l[i], j);
         if(val < 0) continue;
@@ -377,7 +372,7 @@ bool table_scan_column(table_p t, int j)
 {
     for(int i=0; i<t->N; i++)
     {
-        if(bit_m_get(t->cmp, t->N, i, j)) continue;
+        if(bit_m_get(t->res, t->N, i, j) >= 0) continue;
 
         char val = poss_verify(t->c[j], i);
         if(val < 0) continue;
@@ -392,20 +387,18 @@ bool table_scan_column(table_p t, int j)
 
 void table_solve(table_p t)
 {
-    while(t->rem)
+    int k;
+    for(k=0; t->rem; k++)
     {
         for(int i=0; i<t->N; i++)
-        {
             if(table_scan_line(t, i)) 
-                return;
-        }
+                break;
 
         for(int j=0; j<t->N; j++)
-        {
             if(table_scan_column(t, j)) 
-                return;
-        }
+                break;
     }
+    printf("\nk: %d", k);
 }
 
 
@@ -451,8 +444,11 @@ poss_p* poss_arr_create(int N)
 
 char* bit_m_create(int N)
 {
-    char *c = malloc(N*N);
+    size_t size = N * N;
+    char *c = malloc(size);
     assert(c);
+
+    memset(c, -1, size);
     return c;
 }
 
@@ -466,7 +462,6 @@ void table_read(table_p t, char name[])
     poss_p *l = poss_arr_create(N);
     poss_p *c = poss_arr_create(N);
 
-    char* cmp = bit_m_create(N);
     char* res = bit_m_create(N);
 
     int rem = N * N;
@@ -484,5 +479,5 @@ void table_read(table_p t, char name[])
         c[j] = poss_generate(N, n, bars);
     }
 
-    *t = (table_t){N, l, c, cmp, res, rem};
+    *t = (table_t){N, l, c, res, rem};
 }
