@@ -16,9 +16,7 @@ STRUCT(table)
     poss_p *l;
     poss_p *c;
 
-    char* cmp;
     char* res;
-
     int rem;
 };
 
