@@ -431,7 +431,7 @@ int int_read(FILE *fp)
     return i;
 }
 
-int bars_read(int bars[], FILE *fp)
+int int_arr_read(int bars[], FILE *fp)
 {
     for(int n=0; ;n++)
     {
@@ -474,13 +474,13 @@ void table_read(table_p t, char name[])
     int bars[N/2 + 1];
     for(int i=0; i<N; i++)
     {
-        int n = bars_read(bars, fp);
+        int n = int_arr_read(bars, fp);
         l[i] = poss_generate(N, n, bars);
     }
 
     for(int j=0; j<N; j++)
     {
-        int n = bars_read(bars, fp);
+        int n = int_arr_read(bars, fp);
         c[j] = poss_generate(N, n, bars);
     }
 
