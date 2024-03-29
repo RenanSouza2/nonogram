@@ -3,18 +3,30 @@
 
 #include "header.h"
 
+STRUCT(bit_vec)
+{
+    int n;
+    char *arr;
+};
+
 STRUCT(int_vec)
 {
     int n;
     int *arr;
 };
 
+STRUCT(bars)
+{
+    int_vec_t val;
+    bit_vec_t ftr;
+};
+
 STRUCT(table2)
 {
     int N;
 
-    int_vec_p l;
-    int_vec_p c;
+    bars_p l;
+    bars_p c;
 
     char* res;
 
