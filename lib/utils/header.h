@@ -10,10 +10,13 @@
 
 PLACEHOLDER(table);
 
+void bit_display(char c);
+void bit_arr_display(int N, char c[]);
 void bit_m_display(int N, char c[]);
 
 int int_arr_read(int bars[], FILE *fp);
 char* bit_m_create(int N);
+char bit_m_get(char *c, int N, int i, int j);
 void bit_m_set(char *c, int N, int i, int j, char val);
 
 bool bit_is_valid(char b);

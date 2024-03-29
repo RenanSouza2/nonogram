@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include <time.h>
 
 #include "debug.h"
 #include "../utils/struct.h"
+#include "../../utils/assert.h"
 
 
 
@@ -85,10 +85,16 @@ void table2_read(table2_p t, char name[])
 
 bool filter_approve(int N, char b[], char ftr[])
 {
+// printf("\napproving");
+// bit_arr_display(N, b);
+// bit_arr_display(N, ftr);
+
     for(int i=0; i<N; i++)
         if(bit_is_valid(ftr[i]))
         if(b[i] != ftr[i])
             return false;
+
+// printf("\tis true");
 
     return true;
 }
@@ -98,6 +104,15 @@ void bars_verify(int N, char res[], bars_t bars)
     int n = bars.val.n;
     int tot = N + 1 - n - int_arr_get_sum(n, bars.val.arr);
 
+// printf("\nbars: ");
+// for(int i=0; i<n; i++)
+//     printf("%d ", bars.val.arr[i]);
+
+// printf("\nftr");
+// printf("\n--------------");
+// bit_arr_display(N, bars.ftr.arr);
+// printf("\n--------------");
+
     int spaces[n];
     for(spaces_init(n, spaces); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
     {
@@ -105,15 +120,22 @@ void bars_verify(int N, char res[], bars_t bars)
         if(filter_approve(N, res, bars.ftr.arr))
             break;
     }
-    assert(!spaces_is_valid(spaces));
-    
+    assert(spaces_is_valid(spaces));
+
+// printf("\nfirst");
+// bit_arr_display(N, res);
+// printf("\nnexts");
+
     int rem = bars.ftr.n;
     for(spaces_next(n, spaces, tot); spaces_is_valid(spaces) && rem; spaces_next(n, spaces, tot))
     {
         char tmp[N];
         bit_arr_fill(N, tmp, n, spaces, bars.val.arr);
-        if(!filter_approve(N, res, bars.ftr.arr))
+        if(!filter_approve(N, tmp, bars.ftr.arr))
             continue;
+
+// printf("\nvalid");
+// bit_arr_display(N, tmp);
 
         for(int i=0; i<N; i++)
             if(bit_is_valid(res[i]))
@@ -121,7 +143,11 @@ void bars_verify(int N, char res[], bars_t bars)
             {
                 res[i] = -1;
                 rem--;
+
+                if(rem == 0) break;
             }
+
+// bit_arr_display(N, res);
     }
 }
 
@@ -129,6 +155,7 @@ void bars_verify(int N, char res[], bars_t bars)
 
 void step2(table2_p t)
 {
+// getchar();
     clrscr();
     table2_display(t);
     struct timespec spec = (struct timespec){0, 5e6};
@@ -143,6 +170,8 @@ void filter_set(bit_vec_p b, int i, char val)
 
 bool table2_set(table2_p t, int i, int j, char val)
 {
+    printf("\nset %d %d %d", i, j, val);
+
     t->rem--;
     bit_m_set(t->res, t->N, i, j, val);
     filter_set(&t->l[i].ftr, j, val);
@@ -158,17 +187,33 @@ bool table2_scan_column(table2_p t, int j);
 
 bool table2_scan_line(table2_p t, int i)
 {
+// printf("\nscan line %d", i);
+
     int N = t->N;
-    char val[N];
-    bars_verify(N, val, t->l[i]);
+    char set[N];
+    bars_verify(N, set, t->l[i]);
+
+// printf("\nres verify");
+// bit_arr_display(N, set);
+
+    char scan[N];
+    memset(scan, 0, N);
 
     for(int j=0; j<N; j++)
-        if(bit_is_valid(val[j]))
-        if(table2_set(t, i, j, val[j]))
+    {
+        if(bit_is_valid(bit_m_get(t->res, N, i, j))) continue;
+
+        char val = set[j];
+        if(!bit_is_valid(val)) continue;
+
+        if(table2_set(t, i, j, val))
             return true;
 
+        scan[j] = true;
+    }
+
     for(int j=0; j<N; j++)
-        if(bit_is_valid(val[j]))
+        if(scan[j])
         if(table2_scan_column(t, j))
             return true;
 
@@ -177,17 +222,33 @@ bool table2_scan_line(table2_p t, int i)
 
 bool table2_scan_column(table2_p t, int j)
 {
+// printf("\nscan column %d", j);
+
     int N = t->N;
-    char val[N];
-    bars_verify(N, val, t->c[j]);
+    char set[N];
+    bars_verify(N, set, t->c[j]);
+    
+// printf("\nres verify");
+// bit_arr_display(N, set);
+
+    char scan[N];
+    memset(scan, 0, N);
 
     for(int i=0; i<N; i++)
-        if(bit_is_valid(val[i]))
-        if(table2_set(t, i, j, val[i]))
+    {
+        if(bit_is_valid(bit_m_get(t->res, N, i, j))) continue;
+
+        char val = set[i];
+        if(!bit_is_valid(val)) continue;
+
+        if(table2_set(t, i, j, val))
             return true;
 
+        scan[i] = true;
+    }
+
     for(int i=0; i<N; i++)
-        if(bit_is_valid(val[i]))
+        if(scan[i])
         if(table2_scan_line(t, i))
             return true;
 
@@ -198,6 +259,8 @@ void table2_solve(table2_p t)
 {
     while(t->rem)
     {
+// printf("\nnew loop");
+
         for(int i=0; i<t->N; i++)
             if(table2_scan_line(t, i)) 
                 return;

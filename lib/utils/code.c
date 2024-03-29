@@ -329,7 +329,7 @@ void bit_m_set(char *c, int N, int i, int j, char val)
 
 void step(table_p t)
 {
-    clrscr();
+    // clrscr();
     table_display(t);
     struct timespec spec = (struct timespec){0, 5e6};
     nanosleep(&spec, NULL);
