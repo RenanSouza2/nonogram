@@ -1,8 +1,6 @@
 #ifndef __UTILS_DEBUG_H__
 #define __UTILS_DEBUG_H__
 
-#include <stdbool.h>
-
 #include "struct.h"
 
 #ifdef DEBUG
@@ -24,7 +22,7 @@ bool poss_test(poss_p p1, int N, int n, ...);
 
 #endif
 
-char* bit_arr_create(int N, int n, int spaces[], int bars[]);
+char* bit_arr_create(int N);
 
 bool table_scan_line(table_p t, int i);
 bool table_scan_column(table_p t, int j);

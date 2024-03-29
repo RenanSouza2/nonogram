@@ -16,7 +16,6 @@ STRUCT(table2)
     int_vec_p l;
     int_vec_p c;
 
-    char* cmp;
     char* res;
 
     int rem;

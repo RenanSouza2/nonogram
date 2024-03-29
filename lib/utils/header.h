@@ -2,15 +2,24 @@
 #define __UTILS_H__
 
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "../../utils/struct.h"
 
+#define clrscr() printf("\e[1;1H\e[2J")
+
 PLACEHOLDER(table);
+
+void bit_m_display(int N, char c[]);
 
 int int_arr_read(int bars[], FILE *fp);
 char* bit_m_create(int N);
+void bit_m_set(char *c, int N, int i, int j, char val);
 
+bool bit_is_valid(char b);
 int int_arr_get_sum(int n, int arr[]);
+
+void bit_arr_fill(int N, char b[], int n, int spaces[], int bars[]);
 
 FILE* file_open(char name[]);
 char char_read(FILE *fp);
