@@ -80,25 +80,27 @@ void test_utils_bar_create()
 
     int spaces[4] = {0};
     int bars[4] = {1};
-    char *b = bit_arr_create(5, 1, spaces, bars);
+    char b[5];
+    
+    bit_arr_fill(5, b, 1, spaces, bars);
+
+    for(int i=0; i<5; i++)
+        printf("%d", b[i]);
+        
     assert_char_arr(b, "10000");
-    free(b);
 
     int_arr_init_immed(spaces, 1, 1);
-    b = bit_arr_create(5, 1, spaces, bars);
+    bit_arr_fill(5, b, 1, spaces, bars);
     assert_char_arr(b, "01000");
-    free(b);
 
     int_arr_init_immed(spaces, 1, 4);
-    b = bit_arr_create(5, 1, spaces, bars);
+    bit_arr_fill(5, b, 1, spaces, bars);
     assert_char_arr(b, "00001");
-    free(b);
 
     int_arr_init_immed(spaces, 2, 0, 0);
     int_arr_init_immed(bars, 2, 1, 1);
-    b = bit_arr_create(5, 2, spaces, bars);
+    bit_arr_fill(5, b, 2, spaces, bars);
     assert_char_arr(b, "10100");
-    free(b);
 
     assert(clu_mem_empty());
 }

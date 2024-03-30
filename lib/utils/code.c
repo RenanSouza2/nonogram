@@ -7,14 +7,12 @@
 
 
 
-#define clrscr() printf("\e[1;1H\e[2J")
-// #define clrscr()
-
 #ifdef DEBUG
 
 #include <stdarg.h>
 
 #include "../../utils/clu/bin/header.h"
+
 
 
 char* bit_arr_init(char str[])
@@ -56,6 +54,7 @@ poss_p poss_init_immed(int N, int n, ...)
 
     return p;
 }
+
 
 
 bool char_test(char c1, char c2)
@@ -180,6 +179,11 @@ void table_display(table_p t)
 
 
 
+bool bit_is_valid(char b)
+{
+    return b >= 0;
+}
+
 int int_arr_get_sum(int n, int arr[])
 {
     int tot = 0;
@@ -222,11 +226,10 @@ void spaces_next(int n, int spaces[], int tot)
 
 
 
-char* bit_arr_create(int N, int n, int spaces[], int bars[])
+void bit_arr_fill(int N, char b[], int n, int spaces[], int bars[])
 {
-    char *b = calloc(N, 1);
-    assert(b);
-
+    memset(b, 0, N);
+    
     int j = 0;
     for(int i=0; i<n; i++)
     {
@@ -234,6 +237,12 @@ char* bit_arr_create(int N, int n, int spaces[], int bars[])
         memset(&b[j], 1, bars[i]);
         j += bars[i] + 1;
     }
+}
+
+char* bit_arr_create(int N)
+{
+    char *b = calloc(N, 1);
+    assert(b);
     return b;
 }
 
@@ -268,7 +277,8 @@ poss_p poss_generate(int N, int n, int bars[])
     int tot = N + 1 - n - int_arr_get_sum(n, bars);
     for(spaces_init(n, spaces); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
     {
-        char *b = bit_arr_create(N, n, spaces, bars);
+        char *b = bit_arr_create(N);
+        bit_arr_fill(N, b, n, spaces, bars);
         p = poss_create(N, b, p);
     }
 
@@ -319,7 +329,7 @@ void bit_m_set(char *c, int N, int i, int j, char val)
 
 void step(table_p t)
 {
-    clrscr();
+    // clrscr();
     table_display(t);
     struct timespec spec = (struct timespec){0, 5e6};
     nanosleep(&spec, NULL);
@@ -357,7 +367,7 @@ bool table_scan_line(table_p t, int i)
 {
     for(int j=0; j<t->N; j++)
     {
-        if(bit_m_get(t->res, t->N, i, j) >= 0) continue;
+        if(bit_is_valid(bit_m_get(t->res, t->N, i, j))) continue;
 
         char val = poss_verify(t->l[i], j);
         if(val < 0) continue;
@@ -372,7 +382,7 @@ bool table_scan_column(table_p t, int j)
 {
     for(int i=0; i<t->N; i++)
     {
-        if(bit_m_get(t->res, t->N, i, j) >= 0) continue;
+        if(bit_is_valid(bit_m_get(t->res, t->N, i, j))) continue;
 
         char val = poss_verify(t->c[j], i);
         if(val < 0) continue;
@@ -424,7 +434,7 @@ int int_read(FILE *fp)
     return i;
 }
 
-int bars_read(int bars[], FILE *fp)
+int int_arr_read(int bars[], FILE *fp)
 {
     for(int n=0; ;n++)
     {
@@ -469,13 +479,13 @@ void table_read(table_p t, char name[])
     int bars[N/2 + 1];
     for(int i=0; i<N; i++)
     {
-        int n = bars_read(bars, fp);
+        int n = int_arr_read(bars, fp);
         l[i] = poss_generate(N, n, bars);
     }
 
     for(int j=0; j<N; j++)
     {
-        int n = bars_read(bars, fp);
+        int n = int_arr_read(bars, fp);
         c[j] = poss_generate(N, n, bars);
     }
 
