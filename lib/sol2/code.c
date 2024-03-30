@@ -158,7 +158,7 @@ void step2(table2_p t)
 // getchar();
     clrscr();
     table2_display(t);
-    struct timespec spec = (struct timespec){0, 5e6};
+    struct timespec spec = (struct timespec){0, 1e8};
     nanosleep(&spec, NULL);
 }
 
