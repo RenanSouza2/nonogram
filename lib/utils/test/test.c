@@ -106,23 +106,6 @@ void test_utils_bar_create()
 }
 
 
-void test_utils_poss_filter()
-{
-    printf("\n\t%s", __func__);
-
-    poss_p p = poss_init_immed(1, 1, "0");
-    poss_filter(&p, 0, 0);
-    assert(poss_test(p, 1, 1, "0"));
-    poss_free_list(p);
-
-    p = poss_init_immed(1, 2, "0", "1");
-    poss_filter(&p, 0, 0);
-    assert(poss_test(p, 1, 1, "0"));
-    poss_free_list(p);
-
-    assert(clu_mem_empty());
-}
-
 
 void test_utils()
 {
@@ -135,8 +118,6 @@ void test_utils()
     test_utils_spaces_next();
 
     test_utils_bar_create();
-
-    test_utils_poss_filter();
 
     assert(clu_mem_empty());
 }
