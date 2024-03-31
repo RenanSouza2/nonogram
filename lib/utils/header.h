@@ -7,6 +7,7 @@
 #include "../../utils/struct.h"
 
 #define clrscr() printf("\e[1;1H\e[2J")
+#define gotoxy(x,y) printf("\033[%d;%dH", (y), (x))
 
 PLACEHOLDER(table);
 

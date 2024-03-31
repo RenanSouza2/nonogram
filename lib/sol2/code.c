@@ -85,16 +85,10 @@ void table2_read(table2_p t, char name[])
 
 bool filter_approve(int N, char b[], char ftr[])
 {
-// printf("\napproving");
-// bit_arr_display(N, b);
-// bit_arr_display(N, ftr);
-
     for(int i=0; i<N; i++)
         if(bit_is_valid(ftr[i]))
         if(b[i] != ftr[i])
             return false;
-
-// printf("\tis true");
 
     return true;
 }
@@ -103,15 +97,6 @@ void bars_verify(int N, char res[], bars_t bars)
 {
     int n = bars.val.n;
     int tot = N + 1 - n - int_arr_get_sum(n, bars.val.arr);
-
-// printf("\nbars: ");
-// for(int i=0; i<n; i++)
-//     printf("%d ", bars.val.arr[i]);
-
-// printf("\nftr");
-// printf("\n--------------");
-// bit_arr_display(N, bars.ftr.arr);
-// printf("\n--------------");
 
     int spaces[n];
     for(spaces_init(n, spaces); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
@@ -122,20 +107,13 @@ void bars_verify(int N, char res[], bars_t bars)
     }
     assert(spaces_is_valid(spaces));
 
-// printf("\nfirst");
-// bit_arr_display(N, res);
-// printf("\nnexts");
-
     int rem = bars.ftr.n;
-    for(spaces_next(n, spaces, tot); spaces_is_valid(spaces) && rem; spaces_next(n, spaces, tot))
+    for(spaces_next(n, spaces, tot); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
     {
         char tmp[N];
         bit_arr_fill(N, tmp, n, spaces, bars.val.arr);
         if(!filter_approve(N, tmp, bars.ftr.arr))
             continue;
-
-// printf("\nvalid");
-// bit_arr_display(N, tmp);
 
         for(int i=0; i<N; i++)
             if(bit_is_valid(res[i]))
@@ -144,10 +122,8 @@ void bars_verify(int N, char res[], bars_t bars)
                 res[i] = -1;
                 rem--;
 
-                if(rem == 0) break;
+                if(rem == 0) return;
             }
-
-// bit_arr_display(N, res);
     }
 }
 
@@ -156,9 +132,9 @@ void bars_verify(int N, char res[], bars_t bars)
 void step2(table2_p t)
 {
 // getchar();
-    clrscr();
+    gotoxy(0, 0);
     table2_display(t);
-    struct timespec spec = (struct timespec){0, 1e8};
+    struct timespec spec = (struct timespec){0, 1e6};
     nanosleep(&spec, NULL);
 }
 
@@ -170,8 +146,6 @@ void filter_set(bit_vec_p b, int i, char val)
 
 bool table2_set(table2_p t, int i, int j, char val)
 {
-    printf("\nset %d %d %d", i, j, val);
-
     t->rem--;
     bit_m_set(t->res, t->N, i, j, val);
     filter_set(&t->l[i].ftr, j, val);
@@ -187,14 +161,9 @@ bool table2_scan_column(table2_p t, int j);
 
 bool table2_scan_line(table2_p t, int i)
 {
-// printf("\nscan line %d", i);
-
     int N = t->N;
     char set[N];
     bars_verify(N, set, t->l[i]);
-
-// printf("\nres verify");
-// bit_arr_display(N, set);
 
     char scan[N];
     memset(scan, 0, N);
@@ -222,15 +191,10 @@ bool table2_scan_line(table2_p t, int i)
 
 bool table2_scan_column(table2_p t, int j)
 {
-// printf("\nscan column %d", j);
-
     int N = t->N;
     char set[N];
     bars_verify(N, set, t->c[j]);
     
-// printf("\nres verify");
-// bit_arr_display(N, set);
-
     char scan[N];
     memset(scan, 0, N);
 
@@ -259,8 +223,6 @@ void table2_solve(table2_p t)
 {
     while(t->rem)
     {
-// printf("\nnew loop");
-
         for(int i=0; i<t->N; i++)
             if(table2_scan_line(t, i)) 
                 return;
