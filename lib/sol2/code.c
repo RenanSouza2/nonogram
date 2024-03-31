@@ -44,8 +44,9 @@ int_vec_t int_vec_create(int n, int arr[])
 
 poss_p poss_arr_create(int N)
 {
-    poss_p bars = malloc(N * sizeof(poss_t));
-    assert(bars);
+    poss_p p = malloc(N * sizeof(poss_t));
+    assert(p);
+    return p;
 }
 
 poss_p poss_arr_read(FILE *fp, int N)
@@ -91,26 +92,26 @@ bool filter_approve(int N, char b[], char ftr[])
     return true;
 }
 
-void poss_verify(int N, char res[], poss_t bars)
+void poss_verify(int N, char res[], poss_t p)
 {
-    int n = bars.val.n;
-    int tot = N + 1 - n - int_arr_get_sum(n, bars.val.arr);
+    int n = p.bars.n;
+    int tot = N + 1 - n - int_arr_get_sum(n, p.bars.arr);
 
     int spaces[n];
     for(spaces_init(n, spaces); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
     {
-        bit_arr_fill(N, res, n, spaces, bars.val.arr);
-        if(filter_approve(N, res, bars.ftr.arr))
+        bit_arr_fill(N, res, n, spaces, p.bars.arr);
+        if(filter_approve(N, res, p.ftr.arr))
             break;
     }
     assert(spaces_is_valid(spaces));
 
-    int rem = bars.ftr.n;
+    int rem = p.ftr.n;
     for(spaces_next(n, spaces, tot); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
     {
         char tmp[N];
-        bit_arr_fill(N, tmp, n, spaces, bars.val.arr);
-        if(!filter_approve(N, tmp, bars.ftr.arr))
+        bit_arr_fill(N, tmp, n, spaces, p.bars.arr);
+        if(!filter_approve(N, tmp, p.ftr.arr))
             continue;
 
         for(int i=0; i<N; i++)
@@ -125,11 +126,9 @@ void poss_verify(int N, char res[], poss_t bars)
     }
 }
 
-
-
 void step(int i, int j, char val)
 {
-    gotoxy(1 + 2 * j, 1 + i);
+    gotoxy(1 + 2 * j, 2 + i);
     bit_display(val);
     struct timespec spec = (struct timespec){0, 1e6};
     nanosleep(&spec, NULL);
@@ -159,6 +158,8 @@ bool table_scan_column(table_p t, int j);
 bool table_scan_line(table_p t, int i)
 {
     int N = t->N;
+    gotoxy(1 + 2 * N + 10, 2 + i);
+
     char set[N];
     poss_verify(N, set, t->l[i]);
 
@@ -189,6 +190,8 @@ bool table_scan_line(table_p t, int i)
 bool table_scan_column(table_p t, int j)
 {
     int N = t->N;
+    gotoxy(1 + 2 * j, 2 + N + 10);
+
     char set[N];
     poss_verify(N, set, t->c[j]);
     

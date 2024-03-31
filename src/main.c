@@ -13,9 +13,12 @@ int main(int argc, char **argv)
     char name[50];
     sprintf(name, "tables/table%s.txt", argv[1]);
 
-    table2_t t;
-    table2_read(&t, name);
-    table2_solve(&t);
+    table_t t;
+    table_read(&t, name);
+    table_solve(&t);
+
+    clrscr();
+    table_display(&t);
 
     printf("\n");
     return 0;
