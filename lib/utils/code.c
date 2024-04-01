@@ -102,15 +102,15 @@ void bit_display(char c)
 {
     switch (c)
     {
-        case -1: printf("  |"); return;
-        case  0: printf("░░|"); return;
-        case  1: printf("▓▓|"); return;
+        case -1: printf("  "); return;
+        case  0: printf("░░"); return;
+        case  1: printf("▓▓"); return;
     }
 }
 
 void bit_arr_display(int N, char c[])
 {
-    printf("\n|");
+    printf("\n");
     for(int i=0; i<N; i++)
         bit_display(c[i]);
 }
