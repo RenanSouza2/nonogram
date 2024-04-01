@@ -157,9 +157,8 @@ void spaces_init(int N, char line[], int spaces[], poss_p p)
 bool spaces_next(int N, char line[], int spaces[], poss_p p)
 {
     int n = p->bars.n;
-    if(N == n)
+    if(N == p->ftr.n)
     {
-        printf("\nHere")
         if(spaces[0] == p->tot) return false;
 
         spaces[0]++;
