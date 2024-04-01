@@ -3,9 +3,10 @@
 
 #include "../../utils/struct.h"
 
-PLACEHOLDER(table2);
+PLACEHOLDER(table);
 
-void table2_read(table2_p t, char name[]);
-void table2_solve(table2_p t);
+void table_read(table_p t, char name[]);
+void table_solve(table_p t);
+void table_display(table_p t);
 
 #endif

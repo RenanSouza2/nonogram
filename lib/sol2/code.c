@@ -16,7 +16,7 @@
 
 
 
-void table2_display(table2_p t)
+void table_display(table_p t)
 {
     bit_m_display(t->N, t->res);
 }
@@ -42,123 +42,165 @@ int_vec_t int_vec_create(int n, int arr[])
     return (int_vec_t){n, _arr};
 }
 
-bars_p bars_arr_create(int N)
+poss_p poss_arr_create(int N)
 {
-    bars_p bars = malloc(N * sizeof(bars_t));
-    assert(bars);
-    return bars;
+    poss_p p = malloc(N * sizeof(poss_t));
+    assert(p);
+    return p;
 }
 
+poss_t poss_read(FILE *fp, int N)
+{
+    int bars[N/2 + 1];
+    int n = int_arr_read(bars, fp);
 
+    int_vec_t _bars = int_vec_create(n, bars);
+    bit_vec_t ftr = bit_vec_create(N);
 
-void table2_read(table2_p t, char name[])
+    int tot = N + 1 - n - int_arr_sum_reduce(n, bars);
+
+    return (poss_t){tot, _bars, ftr};
+}
+
+poss_p poss_arr_read(FILE *fp, int N)
+{
+    poss_p p = poss_arr_create(N);
+    for(int i=0; i<N; i++)
+        p[i] = poss_read(fp, N);
+
+    return p;
+}
+
+void table_read(table_p t, char name[])
 {
     FILE *fp = file_open(name);
 
     int N = int_read(fp);
     char_read(fp);
 
-    bars_p l = bars_arr_create(N);
-    bars_p c = bars_arr_create(N);
+    poss_p l = poss_arr_read(fp, N);
+    poss_p c = poss_arr_read(fp, N);
     char* res = bit_m_create(N);
 
-    int bars[N/2 + 1];
-    for(int i=0; i<N; i++)
-    {
-        int n = int_arr_read(bars, fp);
-        int_vec_t val = int_vec_create(n, bars);
-        bit_vec_t ftr = bit_vec_create(N);
-        l[i] = (bars_t){val, ftr};
-    }
-
-    for(int j=0; j<N; j++)
-    {
-        int n = int_arr_read(bars, fp);
-        int_vec_t val = int_vec_create(n, bars);
-        bit_vec_t ftr = bit_vec_create(N);
-        c[j] = (bars_t){val, ftr};
-    }
-
     int rem = N * N;
-    *t = (table2_t){N, l, c, res, rem};
+    *t = (table_t){N, l, c, res, rem};
 }
 
-bool filter_approve(int N, char b[], char ftr[])
+
+
+void line_fill(int N, char line[], int n, int spaces[], int bars[], char fill)
 {
-// printf("\napproving");
-// bit_arr_display(N, b);
-// bit_arr_display(N, ftr);
+    memset(line, fill, N);
+    
+    int j = 0;
+    for(int i=0; i<n; i++)
+    {
+        memset(&line[j], 0, spaces[i]);
+        j += spaces[i];
 
+        memset(&line[j], 1, bars[i]);
+        j += bars[i];
+
+        line[j] = 0;
+        j +=  1;
+    }
+}
+
+bool line_approve(int N, char line[], char ftr[])
+{
     for(int i=0; i<N; i++)
-        if(bit_is_valid(ftr[i]))
-        if(b[i] != ftr[i])
-            return false;
+    {
+        if(!bit_is_valid(line[i]))
+            break;
 
-// printf("\tis true");
+        if(!bit_is_valid(ftr[i]))
+            continue;
+
+        if(line[i] != ftr[i])
+            return false;
+    }
 
     return true;
 }
 
-void bars_verify(int N, char res[], bars_t bars)
+
+
+bool spaces_init_rec(int N, char line[], int spaces[], poss_p p, int i, int starter)
 {
-    int n = bars.val.n;
-    int tot = N + 1 - n - int_arr_get_sum(n, bars.val.arr);
-
-// printf("\nbars: ");
-// for(int i=0; i<n; i++)
-//     printf("%d ", bars.val.arr[i]);
-
-// printf("\nftr");
-// printf("\n--------------");
-// bit_arr_display(N, bars.ftr.arr);
-// printf("\n--------------");
-
-    int spaces[n];
-    for(spaces_init(n, spaces); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
+    int n = p->bars.n;
+    if(i == n)
     {
-        bit_arr_fill(N, res, n, spaces, bars.val.arr);
-        if(filter_approve(N, res, bars.ftr.arr))
-            break;
+        line_fill(N, line, n, spaces, p->bars.arr, 0);
+        return line_approve(N, line, p->ftr.arr);
     }
-    assert(spaces_is_valid(spaces));
 
-// printf("\nfirst");
-// bit_arr_display(N, res);
-// printf("\nnexts");
-
-    int rem = bars.ftr.n;
-    for(spaces_next(n, spaces, tot); spaces_is_valid(spaces) && rem; spaces_next(n, spaces, tot))
+    int max = p->tot - int_arr_sum_reduce(i, spaces);
+    for(int space=starter; space <= max; space++)
     {
-        char tmp[N];
-        bit_arr_fill(N, tmp, n, spaces, bars.val.arr);
-        if(!filter_approve(N, tmp, bars.ftr.arr))
+        spaces[i] = space;
+        line_fill(N, line, i+1, spaces, p->bars.arr, -1);
+        if(!line_approve(N, line, p->ftr.arr))
             continue;
 
-// printf("\nvalid");
-// bit_arr_display(N, tmp);
+        if(spaces_init_rec(N, line, spaces, p, i+1, 0))
+            return true;
+    }
 
+    return false;
+}
+
+void spaces_init(int N, char line[], int spaces[], poss_p p)
+{
+    assert(spaces_init_rec(N, line, spaces, p, 0, 0));
+}
+
+bool spaces_next(int N, char line[], int spaces[], poss_p p)
+{
+    int n = p->bars.n;
+    for(int i=n-1; i >= 0; i--)
+        if(spaces_init_rec(N, line, spaces, p, i, spaces[i] + 1))
+            return true;
+    
+    return false;
+}
+
+bool poss_verify(int N, char line[], poss_p p)
+{
+    int n = p->bars.n;
+    int rem = p->ftr.n;
+
+    int spaces[n];
+    spaces_init(N, line, spaces, p);
+
+    char tmp[N];
+    while(spaces_next(N, tmp, spaces, p))
+    {
         for(int i=0; i<N; i++)
-            if(bit_is_valid(res[i]))
-            if(res[i] != tmp[i])
+            if(bit_is_valid(line[i]))
+            if(line[i] != tmp[i])
             {
-                res[i] = -1;
+                line[i] = -1;
                 rem--;
 
-                if(rem == 0) break;
+                if(rem == 0) 
+                    return false;
             }
-
-// bit_arr_display(N, res);
     }
+
+    return true;
 }
 
 
 
-void step2(table2_p t)
+void step(table_p t, int i, int j, char val)
 {
-// getchar();
-    clrscr();
-    table2_display(t);
-    struct timespec spec = (struct timespec){0, 1e8};
+    gotoxy(1 + 2 * j, 2 + i);
+    bit_display(val);
+
+    // clrscr();
+    // table_display(t);
+
+    struct timespec spec = (struct timespec){0, 1e6};
     nanosleep(&spec, NULL);
 }
 
@@ -168,33 +210,28 @@ void filter_set(bit_vec_p b, int i, char val)
     b->n--;
 }
 
-bool table2_set(table2_p t, int i, int j, char val)
+bool table_set(table_p t, int i, int j, char val)
 {
-    printf("\nset %d %d %d", i, j, val);
-
     t->rem--;
     bit_m_set(t->res, t->N, i, j, val);
     filter_set(&t->l[i].ftr, j, val);
     filter_set(&t->c[j].ftr, i, val);
 
-    step2(t);
+    step(t, i, j, val);
     return t->rem == 0;
 }
 
 
 
-bool table2_scan_column(table2_p t, int j);
+bool table_scan_column(table_p t, int j);
 
-bool table2_scan_line(table2_p t, int i)
+bool table_scan_line(table_p t, int i)
 {
-// printf("\nscan line %d", i);
-
     int N = t->N;
-    char set[N];
-    bars_verify(N, set, t->l[i]);
+    gotoxy(1 + 2 * N + 10, 2 + i);
 
-// printf("\nres verify");
-// bit_arr_display(N, set);
+    char set[N];
+    poss_verify(N, set, &t->l[i]);
 
     char scan[N];
     memset(scan, 0, N);
@@ -206,7 +243,7 @@ bool table2_scan_line(table2_p t, int i)
         char val = set[j];
         if(!bit_is_valid(val)) continue;
 
-        if(table2_set(t, i, j, val))
+        if(table_set(t, i, j, val))
             return true;
 
         scan[j] = true;
@@ -214,23 +251,20 @@ bool table2_scan_line(table2_p t, int i)
 
     for(int j=0; j<N; j++)
         if(scan[j])
-        if(table2_scan_column(t, j))
+        if(table_scan_column(t, j))
             return true;
 
     return false;
 }
 
-bool table2_scan_column(table2_p t, int j)
+bool table_scan_column(table_p t, int j)
 {
-// printf("\nscan column %d", j);
-
     int N = t->N;
-    char set[N];
-    bars_verify(N, set, t->c[j]);
-    
-// printf("\nres verify");
-// bit_arr_display(N, set);
+    gotoxy(1 + 2 * j, 2 + N + 10);
 
+    char set[N];
+    poss_verify(N, set, &t->c[j]);
+    
     char scan[N];
     memset(scan, 0, N);
 
@@ -241,7 +275,7 @@ bool table2_scan_column(table2_p t, int j)
         char val = set[i];
         if(!bit_is_valid(val)) continue;
 
-        if(table2_set(t, i, j, val))
+        if(table_set(t, i, j, val))
             return true;
 
         scan[i] = true;
@@ -249,24 +283,23 @@ bool table2_scan_column(table2_p t, int j)
 
     for(int i=0; i<N; i++)
         if(scan[i])
-        if(table2_scan_line(t, i))
+        if(table_scan_line(t, i))
             return true;
 
     return false;
 }
 
-void table2_solve(table2_p t)
+void table_solve(table_p t)
 {
+    clrscr();
     while(t->rem)
     {
-// printf("\nnew loop");
-
         for(int i=0; i<t->N; i++)
-            if(table2_scan_line(t, i)) 
+            if(table_scan_line(t, i)) 
                 return;
 
         for(int j=0; j<t->N; j++)
-            if(table2_scan_column(t, j)) 
+            if(table_scan_column(t, j)) 
                 return;
     }
 }
