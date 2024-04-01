@@ -17,6 +17,7 @@ STRUCT(int_vec)
 
 STRUCT(poss)
 {
+    int tot;
     int_vec_t bars;
     bit_vec_t ftr;
 };

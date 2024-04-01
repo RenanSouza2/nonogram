@@ -128,7 +128,7 @@ bool bit_is_valid(char b)
     return b >= 0;
 }
 
-int int_arr_get_sum(int n, int arr[])
+int int_arr_sum_reduce(int n, int arr[])
 {
     int tot = 0;
     for(int i=0; i<n; i++)
@@ -138,50 +138,6 @@ int int_arr_get_sum(int n, int arr[])
 }
 
 
-
-void spaces_init(int n, int spaces[])
-{
-    memset(spaces, 0, n * sizeof(int));
-}
-
-bool spaces_is_valid(int spaces[])
-{
-    return spaces[0] >= 0;
-}
-
-void spaces_next(int n, int spaces[], int tot)
-{
-    if(n == 0) 
-    {
-        spaces[0] = -1;
-        return;
-    }
-
-    if(int_arr_get_sum(n, spaces) < tot)
-    {
-        spaces[n-1]++;
-        return;
-    }
-
-    spaces[n-1] = 0;
-    spaces_next(n-1, spaces, tot);
-    return;
-}
-
-
-
-void bit_arr_fill(int N, char b[], int n, int spaces[], int bars[])
-{
-    memset(b, 0, N);
-    
-    int j = 0;
-    for(int i=0; i<n; i++)
-    {
-        j += spaces[i];
-        memset(&b[j], 1, bars[i]);
-        j += bars[i] + 1;
-    }
-}
 
 char* bit_arr_create(int N)
 {

@@ -49,18 +49,24 @@ poss_p poss_arr_create(int N)
     return p;
 }
 
+poss_t poss_read(FILE *fp, int N)
+{
+    int bars[N/2 + 1];
+    int n = int_arr_read(bars, fp);
+
+    int_vec_t _bars = int_vec_create(n, bars);
+    bit_vec_t ftr = bit_vec_create(N);
+
+    int tot = N + 1 - n - int_arr_sum_reduce(n, bars);
+
+    return (poss_t){tot, _bars, ftr};
+}
+
 poss_p poss_arr_read(FILE *fp, int N)
 {
     poss_p p = poss_arr_create(N);
-
-    int bars[N/2 + 1];
     for(int i=0; i<N; i++)
-    {
-        int n = int_arr_read(bars, fp);
-        int_vec_t val = int_vec_create(n, bars);
-        bit_vec_t ftr = bit_vec_create(N);
-        p[i] = (poss_t){val, ftr};
-    }
+        p[i] = poss_read(fp, N);
 
     return p;
 }
@@ -82,49 +88,118 @@ void table_read(table_p t, char name[])
 
 
 
-bool filter_approve(int N, char b[], char ftr[])
+void line_fill(int N, char line[], int n, int spaces[], int bars[], char fill)
+{
+    memset(line, fill, N);
+    
+    int j = 0;
+    for(int i=0; i<n; i++)
+    {
+        memset(&line[j], 0, spaces[i]);
+        j += spaces[i];
+
+        memset(&line[j], 1, bars[i]);
+        j += bars[i];
+
+        line[j] = 0;
+        j +=  1;
+    }
+}
+
+bool line_approve(int N, char line[], char ftr[])
 {
     for(int i=0; i<N; i++)
-        if(bit_is_valid(ftr[i]))
-        if(b[i] != ftr[i])
+    {
+        if(!bit_is_valid(line[i]))
+            break;
+
+        if(!bit_is_valid(ftr[i]))
+            continue;
+
+        if(line[i] != ftr[i])
             return false;
+    }
 
     return true;
 }
 
-void poss_verify(int N, char res[], poss_t p)
+
+
+
+bool spaces_init_rec(int i, int starter, int n, int spaces[], int bars[], int tot, int N, char ftr[])
 {
-    int n = p.bars.n;
-    int tot = N + 1 - n - int_arr_get_sum(n, p.bars.arr);
+    if(i == n) return true;
 
-    int spaces[n];
-    for(spaces_init(n, spaces); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
+    int max = tot - int_arr_sum_reduce(i, spaces);
+    for(int space=starter; space <= max; space++)
     {
-        bit_arr_fill(N, res, n, spaces, p.bars.arr);
-        if(filter_approve(N, res, p.ftr.arr))
-            break;
-    }
-    assert(spaces_is_valid(spaces));
+        spaces[i] = space;
 
-    int rem = p.ftr.n;
-    for(spaces_next(n, spaces, tot); spaces_is_valid(spaces); spaces_next(n, spaces, tot))
-    {
-        char tmp[N];
-        bit_arr_fill(N, tmp, n, spaces, p.bars.arr);
-        if(!filter_approve(N, tmp, p.ftr.arr))
+        char line[N];
+        line_fill(N, line, n, spaces, bars, -1);
+        if(!line_approve(N, line, ftr))
             continue;
 
+        if(spaces_init_rec(i+1, 0, n, spaces, bars, tot, N, ftr))
+            return true;
+    }
+
+    return false;
+}
+
+void spaces_init(int n, int spaces[], int bars[], int tot, int N, char ftr[])
+{
+    assert(spaces_init_rec(0, 0, n, spaces, bars, tot, N, ftr));
+}
+
+void spaces_invalidate(int spaces[])
+{
+    spaces[0] = -1;
+}
+
+bool spaces_is_valid(int spaces[])
+{
+    return bit_is_valid(spaces[0]);
+}
+
+void spaces_next(int n, int spaces[], int bars[], int tot, int N, char ftr[])
+{
+    for(int i=n-1; i >= 0; i--)
+        if(spaces_init_rec(i+1, spaces[i] + 1, n, spaces, bars, tot, N, ftr))
+            return;
+
+    spaces_invalidate(spaces);
+}
+
+void poss_verify(int N, char line[], poss_t p)
+{
+    int n = p.bars.n;
+    int rem = p.ftr.n;
+
+    int spaces[n];
+    spaces_init(n, spaces, p.bars.arr, p.tot, N, p.ftr.arr); 
+    line_fill(N, line, n, spaces, p.bars.arr, 0);
+
+    for(
+        spaces_init(n, spaces, p.bars.arr, p.tot, N, p.ftr.arr); 
+        spaces_is_valid(spaces); 
+        spaces_next(n, spaces, p.bars.arr, p.tot, N, p.ftr.arr)
+    ) {
+        char tmp[N];
+        line_fill(N, tmp, n, spaces, p.bars.arr, 0);
         for(int i=0; i<N; i++)
-            if(bit_is_valid(res[i]))
-            if(res[i] != tmp[i])
+            if(bit_is_valid(line[i]))
+            if(line[i] != tmp[i])
             {
-                res[i] = -1;
+                line[i] = -1;
                 rem--;
 
                 if(rem == 0) return;
             }
     }
 }
+
+
 
 void step(int i, int j, char val)
 {

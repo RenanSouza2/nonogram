@@ -23,7 +23,7 @@ bool int_arr_test(int arr[], int n, ...);
 char* bit_arr_create(int N);
 
 char bit_m_get(char *c, int N, int i, int j);
-int int_arr_get_sum(int n, int spaces[]);
+int int_arr_sum_reduce(int n, int spaces[]);
 void spaces_init(int n, int spaces[]);
 bool spaces_is_valid(int spaces[]);
 void spaces_next(int n, int spaces[], int tot);
