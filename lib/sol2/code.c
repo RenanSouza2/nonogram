@@ -157,6 +157,16 @@ void spaces_init(int N, char line[], int spaces[], poss_p p)
 bool spaces_next(int N, char line[], int spaces[], poss_p p)
 {
     int n = p->bars.n;
+    if(N == n)
+    {
+        printf("\nHere")
+        if(spaces[0] == p->tot) return false;
+
+        spaces[0]++;
+        line_fill(N, line, n, spaces, p->bars.arr, 0);
+        return true;
+    }
+
     for(int i=n-1; i >= 0; i--)
         if(spaces_init_rec(N, line, spaces, p, i, spaces[i] + 1))
             return true;
