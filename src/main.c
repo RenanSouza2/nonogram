@@ -17,7 +17,7 @@ int main(int argc, char **argv)
     table_read(&t, name);
     table_solve(&t);
 
-    clrscr();
+    // clrscr();
     table_display(&t);
 
     printf("\n");

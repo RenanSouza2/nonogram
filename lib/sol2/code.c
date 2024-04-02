@@ -32,7 +32,7 @@ bit_vec_t bit_vec_create(int n)
     return (bit_vec_t){n, c};
 }
 
-void int_arr_init(int n, int arr1[], int arr2[])
+void int_arr_set(int n, int arr1[], int arr2[])
 {
     memcpy(arr1, arr2, n * sizeof(int));
 }
@@ -59,7 +59,7 @@ int_vec_t int_vec_create(int n, int arr[])
 
 line_info_p line_info_arr_create(int N)
 {
-    line_info_p l = malloc(N * sizeof(line_info_p));
+    line_info_p l = malloc(N * sizeof(line_info_t));
     assert(l);
     return l;
 }
@@ -106,7 +106,7 @@ void line_set_bar(int N, char line[], int place, int size, bool clean)
     if(clean) memset(line, -1, N);
     memset(&line[place], 1, size);
     bit_arr_set(N, line, place - 1, 0);
-    bit_arr_set(N, line, place + size + 1, 0);
+    bit_arr_set(N, line, place + size, 0);
 }
 
 void line_fill(int N, char line[], int n, int places[], int bars[], char fill)
@@ -140,6 +140,7 @@ bool line_approve(int N, char line[], char filter[])
 bool places_init_rec(int i, int starter, int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
+    printf("\nplaces init rec %d %d", i, n);
 
     if(i == n)
     {
@@ -147,11 +148,19 @@ bool places_init_rec(int i, int starter, int N, char line[], int places[], line_
         return line_approve(N, line, l->filter.arr);
     }
 
-    int max = N - int_arr_sum_reduce(n-i, &l->bars.arr[i]) - i;
+    int max = N + 1 + i - n - int_arr_sum_reduce(n-i, &l->bars.arr[i]);
+printf("\nmax %d: %d", i, max);
+
     for(int place=starter; place<=max; place++)
     {
+printf("\nnew place %d: %d", i, place);
+
         places[i] = place;
         line_fill(N, line, i+1, places, l->bars.arr, -1);
+
+bit_arr_display(N, l->filter.arr);
+bit_arr_display(N, line);
+
         if(!line_approve(N, line, l->filter.arr))
             continue;
 
@@ -188,43 +197,61 @@ bool places_next_rec(int i, int N, char line[], int places[], line_info_p l)
 {
     if(i < 0) return false;
 
-    if(!places_next_fit(i, N, line, places, l)) 
+    int n = l->bars.n;
+    int _places[n+1];
+    int_arr_set(n+1, _places, places);
+
+    if(!places_next_fit(i, N, line, _places, l)) 
         return false;
 
-    int n = l->bars.n;
-    line_fill(N, line, n, places, l->bars.arr, 0);
-    if(line_approve(N, line, l->filter.arr))
+    line_fill(N, line, n, _places, l->bars.arr, 0);
+    if(
+        line_approve(N, line, l->filter.arr) ||
+        places_next_rec(i-1, N, line, _places, l)
+    ) {
+        int_arr_set(n, places, _places);
         return true;
+    }
 
-    return places_next_rec(i-1, N, line, places, l);
+    return false;
 }
 
 bool places_next(int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
-    return places_next_rec(n-1, N, line, places, l);
+    for(int i=n-1; i>=0; i--)
+        if(places_next_rec(i, N, line, places, l))
+            return true;
+
+    return false;
 }
+
+
 
 bool line_info_scan(int N, char line[], line_info_p l)
 {
     int n = l->bars.n;
     int rem = l->filter.n;
 
-// printf("\nposs verify");
-// printf("\nbars: ");
-// for(int i=0; i<p->bars.n; i++)
-//     printf(" %d", p->bars.arr[i]);
-// bit_arr_display(N, p->ftr.arr);
+printf("\nline scan");
+printf("\nbars: ");
+for(int i=0; i<l->bars.n; i++)
+    printf(" %d", l->bars.arr[i]);
+printf("\nfilter");
+bit_arr_display(N, l->filter.arr);
     
     int places[n+1];
     places_init(N, line, places, l);
 
+printf("\nfirst");
+bit_arr_display(N, line);
+
     char tmp[N];
     while(places_next(N, tmp, places, l))
     {
-// printf("\n------------");
-// bit_arr_display(N, line);
-// bit_arr_display(N, tmp);
+printf("\n------------");
+bit_arr_display(N, line);
+bit_arr_display(N, tmp);
 
         for(int i=0; i<N; i++)
             if(bit_is_valid(line[i]))
@@ -242,13 +269,13 @@ bool line_info_scan(int N, char line[], line_info_p l)
                 }
             }
 
-// bit_arr_display(N, line);
-// printf("\trem: %d", rem);
+bit_arr_display(N, line);
+printf("\trem: %d", rem);
 // getchar();
     }
 
-// bit_arr_display(N, line);
-// printf("\tCONCLUSION!!!!");
+bit_arr_display(N, line);
+printf("\tCONCLUSION!!!!");
 // getchar();
 
     return true;
@@ -356,7 +383,7 @@ bool table_scan_column(table_p t, int j)
 
 void table_solve(table_p t)
 {
-    clrscr();
+    // clrscr();
     while(t->rem)
     {
         for(int i=0; i<t->N; i++)
