@@ -209,8 +209,8 @@ void step(table_p t, int i, int j, char val)
     // clrscr();
     // table_display(t);
 
-    struct timespec spec = (struct timespec){0, 1e6};
-    nanosleep(&spec, NULL);
+    // struct timespec spec = (struct timespec){0, 1e6};
+    // nanosleep(&spec, NULL);
 }
 
 void filter_set(bit_vec_p b, int i, char val)
