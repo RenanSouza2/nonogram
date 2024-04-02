@@ -15,19 +15,18 @@ STRUCT(int_vec)
     int *arr;
 };
 
-STRUCT(poss)
+STRUCT(line_info)
 {
-    int tot;
     int_vec_t bars;
-    bit_vec_t ftr;
+    bit_vec_t filter;
 };
 
 STRUCT(table)
 {
     int N;
 
-    poss_p l;
-    poss_p c;
+    line_info_p r;
+    line_info_p c;
 
     char* res;
 

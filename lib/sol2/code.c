@@ -32,9 +32,17 @@ bit_vec_t bit_vec_create(int n)
     return (bit_vec_t){n, c};
 }
 
-void int_arr_set(int n, int arr1[], int arr2[])
+void int_arr_init(int n, int arr1[], int arr2[])
 {
     memcpy(arr1, arr2, n * sizeof(int));
+}
+
+void bit_arr_set(int n, char b[], int i, char val)
+{
+    if(i <  0) return;
+    if(n <= i) return;
+
+    b[i] = val;
 }
 
 int_vec_t int_vec_create(int n, int arr[])
@@ -49,33 +57,31 @@ int_vec_t int_vec_create(int n, int arr[])
 
 
 
-poss_p poss_arr_create(int N)
+line_info_p line_info_arr_create(int N)
 {
-    poss_p p = malloc(N * sizeof(poss_t));
-    assert(p);
-    return p;
+    line_info_p l = malloc(N * sizeof(line_info_p));
+    assert(l);
+    return l;
 }
 
-poss_t poss_read(FILE *fp, int N)
+line_info_t line_info_read(FILE *fp, int N)
 {
     int bars[N/2 + 1];
     int n = int_arr_read(bars, fp);
 
     int_vec_t _bars = int_vec_create(n, bars);
-    bit_vec_t ftr = bit_vec_create(N);
+    bit_vec_t _filter = bit_vec_create(N);
 
-    int tot = N + 1 - n - int_arr_sum_reduce(n, bars);
-
-    return (poss_t){tot, _bars, ftr};
+    return (line_info_t){_bars, _filter};
 }
 
-poss_p poss_arr_read(FILE *fp, int N)
+line_info_p line_info_arr_read(FILE *fp, int N)
 {
-    poss_p p = poss_arr_create(N);
+    line_info_p l = line_info_arr_create(N);
     for(int i=0; i<N; i++)
-        p[i] = poss_read(fp, N);
+        l[i] = line_info_read(fp, N);
 
-    return p;
+    return l;
 }
 
 void table_read(table_p t, char name[])
@@ -85,8 +91,8 @@ void table_read(table_p t, char name[])
     int N = int_read(fp);
     char_read(fp);
 
-    poss_p l = poss_arr_read(fp, N);
-    poss_p c = poss_arr_read(fp, N);
+    line_info_p l = line_info_arr_read(fp, N);
+    line_info_p c = line_info_arr_read(fp, N);
     char* res = bit_m_create(N);
 
     int rem = N * N;
@@ -95,181 +101,157 @@ void table_read(table_p t, char name[])
 
 
 
-void line_fill_last(int N, char line[], int n, int spaces[], int bars[])
+void line_set_bar(int N, char line[], int place, int size, bool clean)
 {
-    memset(line, -1, N * sizeof(int));
-    int j = 
+    if(clean) memset(line, -1, N);
+    memset(&line[place], 1, size);
+    bit_arr_set(N, line, place - 1, 0);
+    bit_arr_set(N, line, place + size + 1, 0);
 }
 
-void line_fill(int N, char line[], int n, int spaces[], int bars[], char fill)
+void line_fill(int N, char line[], int n, int places[], int bars[], char fill)
 {
     memset(line, fill, N);
-    memset(line, 0, spaces[0]);
+    memset(line, 0, places[n-1]);
 
-    int j = spaces[0];
-    memset(&line[j], 1, bars[0]);
-    j += bars[0];
-    
-    for(int i=1; i<n; i++)
-    {
-        memset(&line[j], 0, 1 + spaces[i]);
-        j += 1 + spaces[i];
-
-        memset(&line[j], 1, bars[i]);
-        j += bars[i];
-
-    }
+    for(int i=0; i<n; i++)
+        line_set_bar(N, line, places[i], bars[i], false);
 }
 
-int line_verify(int N, char line[], char ftr[])
+int line_verify(int N, char line[], char filter[])
 {
     for(int i=0; i<N; i++)
     {
-        if(!bit_is_valid(line[i]))
-            break;
-
-        if(!bit_is_valid(ftr[i]))
-            continue;
-
-        if(line[i] != ftr[i])
-            return i;
+        if(bit_is_valid(line[i]))
+        if(bit_is_valid(filter[i]))
+        if(line[i] != filter[i]) return i;
     }
 
     return N;
 }
 
-bool line_approve(int N, char line[], char ftr[])
+bool line_approve(int N, char line[], char filter[])
 {
-    return line_verify(N, line, ftr) == N;
+    return line_verify(N, line, filter) == N;
 }
 
 
 
-bool spaces_init_rec(int N, char line[], int spaces[], poss_p p, int i, int starter)
+bool places_init_rec(int i, int starter, int N, char line[], int places[], line_info_p l)
 {
-    int n = p->bars.n;
+    int n = l->bars.n;
+
     if(i == n)
     {
-        line_fill(N, line, n, spaces, p->bars.arr, 0);
-        return line_approve(N, line, p->ftr.arr);
+        line_fill(N, line, n, places, l->bars.arr, 0);
+        return line_approve(N, line, l->filter.arr);
     }
 
-    int max = p->tot - int_arr_sum_reduce(i, spaces);
-    for(int space=starter; space <= max; space++)
+    int max = N - int_arr_sum_reduce(n-i, &l->bars.arr[i]) - i;
+    for(int place=starter; place<=max; place++)
     {
-        spaces[i] = space;
-        line_fill(N, line, i+1, spaces, p->bars.arr, -1);
-        if(!line_approve(N, line, p->ftr.arr))
+        places[i] = place;
+        line_fill(N, line, i+1, places, l->bars.arr, -1);
+        if(!line_approve(N, line, l->filter.arr))
             continue;
 
-        if(spaces_init_rec(N, line, spaces, p, i+1, 0))
+        if(places_init_rec(i+1, place + l->bars.arr[i] + 1, N, line, places, l))
             return true;
     }
 
     return false;
 }
 
-void spaces_init(int N, char line[], int spaces[], poss_p p)
+void places_init(int N, char line[], int places[], line_info_p l)
 {
-    assert(spaces_init_rec(N, line, spaces, p, 0, 0));
+    assert(places_init_rec(0, 0, N, line, places, l));
+    places[l->bars.n] = N+1;
 }
 
-bool spaces_next_i(int i, int N0, int N, char line[], int spaces[], poss_p p)
+bool places_next_fit(int i, int N, char line[], int places[], line_info_p l)
 {
-    if(i<0) return false;
+    if(i < 0) return false;
 
-    int n = p->bars.n;
-    int _spaces[n];
-    int_arr_set(n, _spaces, spaces);
-
-    int max = spaces[i] + spaces[i+1];
-    for(int space=spaces[i]+1; space<=max; space++)
+    int bar = l->bars.arr[i];
+    int max = places[i+1] - 1 - bar;
+    for(int place=places[i] + 1; place<=max; place++)
     {
-        _spaces[i  ] = space;
-        _spaces[i+1] = max - space;
-        line_fill(N, line, n, _spaces, p->bars.arr, 0);
-        int diff = line_verify(N, line, p->ftr.arr);
+        places[i] = place;
+        line_set_bar(N, line, place, bar, true);
+        if(line_approve(N, line, l->filter.arr))
+            return true;
+    }
+    return false;
+}
 
-        if(diff < N0)
-        {
-            if(line[diff] == 0)
-                continue;
+bool places_next_rec(int i, int N, char line[], int places[], line_info_p l)
+{
+    if(i < 0) return false;
 
-            if(space == spaces[i] + 1)
-                continue;
+    if(!places_next_fit(i, N, line, places, l)) 
+        return false;
 
-            if(!spaces_next_i(i-1, diff, N, line, _spaces, p))
-                return false;
-            
-            diff = line_verify(N, line, p->ftr.arr);
-        }
-
-        if(diff <  N)
-        if(diff == N0)
-            continue;
-
-        int_arr_set(n, spaces, _spaces);
+    int n = l->bars.n;
+    line_fill(N, line, n, places, l->bars.arr, 0);
+    if(line_approve(N, line, l->filter.arr))
         return true;
-    }
 
-    return false;
+    return places_next_rec(i-1, N, line, places, l);
 }
 
-bool spaces_next_last(int N, char line[], int spaces[], poss_p p)
+bool places_next(int N, char line[], int places[], line_info_p l)
 {
-// printf("\nspaces next last");
+    int n = l->bars.n;
+    return places_next_rec(n-1, N, line, places, l);
+}
 
-    int n = p->bars.n;
-    int _spaces[n];
-    int_arr_set(n, _spaces, spaces);
+bool line_info_scan(int N, char line[], line_info_p l)
+{
+    int n = l->bars.n;
+    int rem = l->filter.n;
 
-    int i = n-1;
-    int max = p->tot - int_arr_sum_reduce(i, spaces);
-    for(int space=spaces[i]+1; space<=max; space++)
+// printf("\nposs verify");
+// printf("\nbars: ");
+// for(int i=0; i<p->bars.n; i++)
+//     printf(" %d", p->bars.arr[i]);
+// bit_arr_display(N, p->ftr.arr);
+    
+    int places[n+1];
+    places_init(N, line, places, l);
+
+    char tmp[N];
+    while(places_next(N, tmp, places, l))
     {
-        _spaces[i] = space;
-        line_fill(N, line, n, _spaces, p->bars.arr, 0);
-
-// printf("\nnew line");
+// printf("\n------------");
 // bit_arr_display(N, line);
+// bit_arr_display(N, tmp);
 
-        int diff = line_verify(N, line, p->ftr.arr);
+        for(int i=0; i<N; i++)
+            if(bit_is_valid(line[i]))
+            if(line[i] != tmp[i])
+            {
+                line[i] = -1;
+                rem--;
 
-// printf("\tdiff");
+                if(rem == 0) 
+                {
 
-        if(diff == N)
-        {
-            int_arr_set(n, spaces, _spaces);
-            return true;
-        }
+// printf("\t NO CONCLUSION :(");
 
-        if(line[diff] == 0)
-            continue;
-        
-        if(space == spaces[i] + 1)
-            continue;
-        
-        if(!spaces_next_i(i-1, diff, N, line, _spaces, p))
-            return false;
+                    return false;
+                }
+            }
+
+// bit_arr_display(N, line);
+// printf("\trem: %d", rem);
+// getchar();
     }
 
-// printf("\nspaces next last | last exit");
+// bit_arr_display(N, line);
+// printf("\tCONCLUSION!!!!");
+// getchar();
 
-    return false;
-}
-
-bool spaces_next(int N, char line[], int spaces[], poss_p p)
-{
-// printf("\nspaces next");
-
-    if(spaces_next_last(N, line, spaces, p)) return true;
-
-    int n = p->bars.n;
-    for(int i=n-2; i >= 0; i--)
-        if(spaces_next_i(i, N, N, line, spaces, p))
-            return true;
-
-    return false;
+    return true;
 }
 
 
@@ -287,54 +269,6 @@ void step(table_p t, int i, int j, char val)
     // nanosleep(&spec, NULL);
 }
 
-bool poss_verify(int N, char line[], poss_p p)
-{
-    int n = p->bars.n;
-    int rem = p->ftr.n;
-
-printf("\nposs verify");
-printf("\nbars: ");
-for(int i=0; i<p->bars.n; i++)
-    printf(" %d", p->bars.arr[i]);
-bit_arr_display(N, p->ftr.arr);
-    
-    int spaces[n];
-    spaces_init(N, line, spaces, p);
-
-    char tmp[N];
-    while(spaces_next(N, tmp, spaces, p))
-    {
-printf("\n------------");
-bit_arr_display(N, line);
-bit_arr_display(N, tmp);
-
-        for(int i=0; i<N; i++)
-            if(bit_is_valid(line[i]))
-            if(line[i] != tmp[i])
-            {
-                line[i] = -1;
-                rem--;
-
-                if(rem == 0) 
-                {
-
-printf("\t NO CONCLUSION :(");
-
-                    return false;
-                }
-            }
-
-bit_arr_display(N, line);
-printf("\trem: %d", rem);
-getchar();
-    }
-
-bit_arr_display(N, line);
-printf("\tCONCLUSION!!!!");
-getchar();
-    return true;
-}
-
 void filter_set(bit_vec_p b, int i, char val)
 {
     b->arr[i] = val;
@@ -345,8 +279,8 @@ bool table_set(table_p t, int i, int j, char val)
 {
     t->rem--;
     bit_m_set(t->res, t->N, i, j, val);
-    filter_set(&t->l[i].ftr, j, val);
-    filter_set(&t->c[j].ftr, i, val);
+    filter_set(&t->r[i].filter, j, val);
+    filter_set(&t->c[j].filter, i, val);
 
     step(t, i, j, val);
     return t->rem == 0;
@@ -356,13 +290,13 @@ bool table_set(table_p t, int i, int j, char val)
 
 bool table_scan_column(table_p t, int j);
 
-bool table_scan_line(table_p t, int i)
+bool table_scan_row(table_p t, int i)
 {
     int N = t->N;
     // gotoxy(1 + 2 * N + 10, 2 + i);
 
     char set[N];
-    poss_verify(N, set, &t->l[i]);
+    line_info_scan(N, set, &t->r[i]);
 
     char scan[N];
     memset(scan, 0, N);
@@ -381,7 +315,7 @@ bool table_scan_line(table_p t, int i)
     }
 
     for(int j=0; j<N; j++)
-        if(scan[j])
+    if(scan[j])
         if(table_scan_column(t, j))
             return true;
 
@@ -394,7 +328,7 @@ bool table_scan_column(table_p t, int j)
     // gotoxy(1 + 2 * j, 2 + N + 10);
 
     char set[N];
-    poss_verify(N, set, &t->c[j]);
+    line_info_scan(N, set, &t->c[j]);
     
     char scan[N];
     memset(scan, 0, N);
@@ -414,7 +348,7 @@ bool table_scan_column(table_p t, int j)
 
     for(int i=0; i<N; i++)
         if(scan[i])
-        if(table_scan_line(t, i))
+        if(table_scan_row(t, i))
             return true;
 
     return false;
@@ -426,7 +360,7 @@ void table_solve(table_p t)
     while(t->rem)
     {
         for(int i=0; i<t->N; i++)
-            if(table_scan_line(t, i)) 
+            if(table_scan_row(t, i)) 
                 return;
 
         for(int j=0; j<t->N; j++)
