@@ -120,19 +120,19 @@ void line_fill(int N, char line[], int n, int places[], int bars[], char fill)
 
 int line_verify(int N, char line[], char filter[])
 {
-    for(int i=0; i<N; i++)
+    for(int i=N-1; i>=0; i--)
     {
         if(bit_is_valid(line[i]))
         if(bit_is_valid(filter[i]))
         if(line[i] != filter[i]) return i;
     }
 
-    return N;
+    return -1;
 }
 
 bool line_approve(int N, char line[], char filter[])
 {
-    return line_verify(N, line, filter) == N;
+    return line_verify(N, line, filter) == -1;
 }
 
 
@@ -179,17 +179,41 @@ void places_init(int N, char line[], int places[], line_info_p l)
 
 bool places_next_fit(int i, int N, char line[], int places[], line_info_p l)
 {
-    if(i < 0) return false;
+    printf("\nplaces next fit %d", i);
 
     int bar = l->bars.arr[i];
     int max = places[i+1] - 1 - bar;
     for(int place=places[i] + 1; place<=max; place++)
     {
+printf("\nnew place %d", place);
+
         places[i] = place;
         line_set_bar(N, line, place, bar, true);
+
+bit_arr_display(N, l->filter.arr);
+bit_arr_display(N, line);
+
         if(line_approve(N, line, l->filter.arr))
             return true;
+
+        printf("\nnot approved");
     }
+    return false;
+}
+
+bool places_next_fit_loop(int i, int N, char line[], int places[], line_info_p l)
+{
+    int n = l->bars.n;
+    while(places_next_fit(i, N, line, places, l))
+    {
+    printf("\nnew fit");
+
+        line_fill(N, line, n, places, l->bars.arr, 0);
+        
+        int rej = line_verify(N, line, l->filter.arr);
+        if(rej < places[i]) return true;
+    }
+
     return false;
 }
 
@@ -201,10 +225,9 @@ bool places_next_rec(int i, int N, char line[], int places[], line_info_p l)
     int _places[n+1];
     int_arr_set(n+1, _places, places);
 
-    if(!places_next_fit(i, N, line, _places, l)) 
+    if(!places_next_fit_loop(i, N, line, _places, l))
         return false;
-
-    line_fill(N, line, n, _places, l->bars.arr, 0);
+    
     if(
         line_approve(N, line, l->filter.arr) ||
         places_next_rec(i-1, N, line, _places, l)
@@ -220,8 +243,11 @@ bool places_next(int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
     for(int i=n-1; i>=0; i--)
+    {
+        printf("\nplaces next %d", i);
         if(places_next_rec(i, N, line, places, l))
             return true;
+    }
 
     return false;
 }
@@ -263,7 +289,7 @@ bit_arr_display(N, tmp);
                 if(rem == 0) 
                 {
 
-// printf("\t NO CONCLUSION :(");
+printf("\t NO CONCLUSION :(");
 
                     return false;
                 }
@@ -271,12 +297,18 @@ bit_arr_display(N, tmp);
 
 bit_arr_display(N, line);
 printf("\trem: %d", rem);
-getchar();
+// getchar();
     }
+
+    
+for(int i=0; i<N; i++)
+    if(line[i] == l->filter.arr[i])
+        line[i] = -1;
+
 
 bit_arr_display(N, line);
 printf("\tCONCLUSION!!!!");
-getchar();
+// getchar();
 
     return true;
 }
@@ -290,7 +322,7 @@ void step(table_p t, int i, int j, char val)
     // bit_display(val);
 
     // clrscr();
-    table_display(t);
+    // table_display(t);
 
     // struct timespec spec = (struct timespec){0, 1e6};
     // nanosleep(&spec, NULL);
@@ -319,11 +351,14 @@ bool table_scan_column(table_p t, int j);
 
 bool table_scan_row(table_p t, int i)
 {
+    printf("\nrow scan %d", i);
+
     int N = t->N;
     // gotoxy(1 + 2 * N + 10, 2 + i);
 
     char set[N];
-    line_info_scan(N, set, &t->r[i]);
+    if(!line_info_scan(N, set, &t->r[i]))
+        return false;
 
     char scan[N];
     memset(scan, 0, N);
@@ -341,6 +376,8 @@ bool table_scan_row(table_p t, int i)
         scan[j] = true;
     }
 
+    table_display(t);
+
     for(int j=0; j<N; j++)
     if(scan[j])
         if(table_scan_column(t, j))
@@ -351,11 +388,14 @@ bool table_scan_row(table_p t, int i)
 
 bool table_scan_column(table_p t, int j)
 {
+    printf("\ncol scan %d", j);
+
     int N = t->N;
     // gotoxy(1 + 2 * j, 2 + N + 10);
 
     char set[N];
-    line_info_scan(N, set, &t->c[j]);
+    if(!line_info_scan(N, set, &t->c[j]))
+        return false;
     
     char scan[N];
     memset(scan, 0, N);
@@ -372,6 +412,8 @@ bool table_scan_column(table_p t, int j)
 
         scan[i] = true;
     }
+
+    table_display(t);
 
     for(int i=0; i<N; i++)
         if(scan[i])
