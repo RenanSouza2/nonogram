@@ -110,9 +110,9 @@ void line_set_bar(int N, char line[], int place, int size, bool clean)
     bit_arr_set(N, line, place + size, 0);
 }
 
-void line_fill(int N, char line[], int n, int places[], int bars[], char fill)
+void line_fill(int N, char line[], int n, int places[], int bars[], bool fill)
 {
-    memset(line, fill, N);
+    memset(line, fill ? 0 : -1, N);
     memset(line, 0, places[n-1]);
 
     for(int i=0; i<n; i++)
@@ -133,19 +133,19 @@ int line_verify(int N, char line[], char filter[])
 
 bool line_approve(int N, char line[], char filter[])
 {
-    return line_verify(N, line, filter) == -1;
+    return line_verify(N, line, filter) < 0;
 }
 
 
 
-bool places_init_rec(int i, int starter, int N, char line[], int places[], line_info_p l)
+bool line_init_rec(int i, int starter, int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
 // printf("\nplaces init rec %d %d", i, n);
 
     if(i == n)
     {
-        line_fill(N, line, n, places, l->bars.arr, 0);
+        line_fill(N, line, n, places, l->bars.arr, true);
         return line_approve(N, line, l->filter.arr);
     }
 
@@ -157,7 +157,7 @@ bool places_init_rec(int i, int starter, int N, char line[], int places[], line_
 // printf("\nnew place %d: %d", i, place);
 
         places[i] = place;
-        line_fill(N, line, i+1, places, l->bars.arr, -1);
+        line_fill(N, line, i+1, places, l->bars.arr, false);
 
 // bit_arr_display(N, l->filter.arr);
 // bit_arr_display(N, line);
@@ -165,88 +165,66 @@ bool places_init_rec(int i, int starter, int N, char line[], int places[], line_
         if(!line_approve(N, line, l->filter.arr))
             continue;
 
-        if(places_init_rec(i+1, place + l->bars.arr[i] + 1, N, line, places, l))
+        if(line_init_rec(i+1, place + l->bars.arr[i] + 1, N, line, places, l))
             return true;
     }
 
     return false;
 }
 
-void places_init(int N, char line[], int places[], line_info_p l)
+void line_init(int N, char line[], int places[], line_info_p l)
 {
-    assert(places_init_rec(0, 0, N, line, places, l));
+    assert(line_init_rec(0, 0, N, line, places, l));
     places[l->bars.n] = N+1;
 }
 
-bool places_next_fit(int i, int N, char line[], int places[], line_info_p l)
+bool line_next_fit(int i, int N, char line[], int places[], line_info_p l)
 {
+    int n = l->bars.n;
+    int _places[n+1];
+    int_arr_set(n+1, _places, places);
+
     int bar = l->bars.arr[i];
-    int max = places[i+1] - 1 - bar;
-    for(int place=places[i] + 1; place<=max; place++)
+    int max = places[i+1] - bar;
+    for(int place=places[i]+1; place<max; place++)
     {
-        places[i] = place;
+        _places[i] = place;
         line_set_bar(N, line, place, bar, true);
         if(line_approve(N, line, l->filter.arr))
-            return true;
+            return int_arr_set(n+1, places, _places);
     }
-    return false;
-}
-
-bool places_next_adjust(int i, int N, char line[], int places[], line_info_p l)
-{
-    if(i < 0) return false;
-
-    int n = l->bars.n;
-    int _places[n];
-    int_arr_set(n, _places, places);
-    while(places_next_fit(i, N, line, _places, l))
-        if(line_verify(N, line, l->filter.arr) < _places[i])
-            break;
-
-    if(
-        line_approve(N, line, l->filter.arr) || 
-        places_next_adjust(i-1, N, line, _places, l)
-    )
-        return int_arr_set(n, places, _places); 
 
     return false;
 }
 
-bool places_next_rec(int i, int N, char line[], int places[], line_info_p l)
+bool line_next_rec(int i, int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
-    
-printf("\nplaces next rec %d %d", n, i);
-
-    if(i == n) return false;
-
-    int _places[n];
-    int_arr_set(n, _places, places);
-    if(!places_next_fit(i, N, line, _places, l))
-    {
-        printf("\nNot able to move");
-        if(places_next_rec(i+1, N, line, _places, l))
-            return int_arr_set(n, places, _places);
-
+    if(i == n)
         return false;
-    }
 
-    line_fill(N, line, n, _places, l->bars.arr, 0);
-    if(
-        line_approve(N, line, l->filter.arr) ||
-        places_next_adjust(i-1, N, line, _places, l)
-    )
-        return int_arr_set(n, places, _places);
-    
-    return false;
+    if(line_next_fit(i, N, line, places, l))
+        return true;
+
+    if(!line_next_rec(i+1, N, line, places, l))
+        return false;
+
+    line_fill(N, line, n, places, l->bars.arr, true);
+    if(line_verify(N, line, l->filter.arr) < places[i])
+        return true;
+
+    return line_next_rec(i, N, line, places, l);
 }
 
-bool places_next(int N, char line[], int places[], line_info_p l)
+bool line_next(int N, char line[], int places[], line_info_p l)
 {
-printf("\nplaces next");
-    return places_next_rec(0, N, line, places, l);
-}
+    if(!line_next_rec(0, N, line, places, l))
+        return false;
 
+    int n = l->bars.n;
+    line_fill(N, line, n, places, l->bars.arr, true);
+    return line_approve(N, line, l->filter.arr);
+}
 
 
 bool line_info_scan(int N, char line[], line_info_p l)
@@ -262,13 +240,13 @@ printf("\nfilter");
 bit_arr_display(N, l->filter.arr);
     
     int places[n+1];
-    places_init(N, line, places, l);
+    line_init(N, line, places, l);
 
 printf("\nfirst");
 bit_arr_display(N, line);
 
     char tmp[N];
-    while(places_next(N, tmp, places, l))
+    while(line_next(N, tmp, places, l))
     {
 printf("\n------------");
 bit_arr_display(N, l->filter.arr);

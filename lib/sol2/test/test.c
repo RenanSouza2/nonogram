@@ -20,7 +20,7 @@ void test_sol2_line_scan()
     char filter[] = {-1, -1, -1, 1, 0, -1, -1, -1, -1, -1};
 
     line_info_t l = (line_info_t){{2, bars}, {8, filter}};
-    places_init(10, line, places, &l);
+    line_init(10, line, places, &l);
     bit_arr_display(N, line);
 
     assert(places_next(N, line, places, &l));

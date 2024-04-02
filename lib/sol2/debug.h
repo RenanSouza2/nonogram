@@ -8,7 +8,7 @@
 #ifdef DEBUG
 #endif
 
-void places_init(int N, char line[], int places[], line_info_p l);
+void line_init(int N, char line[], int places[], line_info_p l);
 bool places_next(int N, char line[], int places[], line_info_p l);
 
 #endif
