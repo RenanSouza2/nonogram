@@ -179,24 +179,24 @@ void places_init(int N, char line[], int places[], line_info_p l)
 
 bool places_next_fit(int i, int N, char line[], int places[], line_info_p l)
 {
-    printf("\nplaces next fit %d", i);
+// printf("\nplaces next fit %d", i);
 
     int bar = l->bars.arr[i];
     int max = places[i+1] - 1 - bar;
     for(int place=places[i] + 1; place<=max; place++)
     {
-printf("\nnew place %d", place);
+// printf("\nnew place %d", place);
 
         places[i] = place;
         line_set_bar(N, line, place, bar, true);
 
-bit_arr_display(N, l->filter.arr);
-bit_arr_display(N, line);
+// bit_arr_display(N, l->filter.arr);
+// bit_arr_display(N, line);
 
         if(line_approve(N, line, l->filter.arr))
             return true;
 
-        printf("\nnot approved");
+// printf("\nnot approved");
     }
     return false;
 }
@@ -206,7 +206,7 @@ bool places_next_fit_loop(int i, int N, char line[], int places[], line_info_p l
     int n = l->bars.n;
     while(places_next_fit(i, N, line, places, l))
     {
-    printf("\nnew fit");
+// printf("\nnew fit");
 
         line_fill(N, line, n, places, l->bars.arr, 0);
         
@@ -244,7 +244,7 @@ bool places_next(int N, char line[], int places[], line_info_p l)
     int n = l->bars.n;
     for(int i=n-1; i>=0; i--)
     {
-        printf("\nplaces next %d", i);
+// printf("\nplaces next %d", i);
         if(places_next_rec(i, N, line, places, l))
             return true;
     }
@@ -276,6 +276,7 @@ bit_arr_display(N, line);
     while(places_next(N, tmp, places, l))
     {
 printf("\n------------");
+bit_arr_display(N, l->filter.arr);
 bit_arr_display(N, line);
 bit_arr_display(N, tmp);
 
@@ -297,7 +298,7 @@ printf("\t NO CONCLUSION :(");
 
 bit_arr_display(N, line);
 printf("\trem: %d", rem);
-// getchar();
+getchar();
     }
 
     
@@ -308,7 +309,7 @@ for(int i=0; i<N; i++)
 
 bit_arr_display(N, line);
 printf("\tCONCLUSION!!!!");
-// getchar();
+getchar();
 
     return true;
 }
