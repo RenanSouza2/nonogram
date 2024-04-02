@@ -140,7 +140,7 @@ bool line_approve(int N, char line[], char filter[])
 bool places_init_rec(int i, int starter, int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
-    printf("\nplaces init rec %d %d", i, n);
+// printf("\nplaces init rec %d %d", i, n);
 
     if(i == n)
     {
@@ -149,17 +149,17 @@ bool places_init_rec(int i, int starter, int N, char line[], int places[], line_
     }
 
     int max = N + 1 + i - n - int_arr_sum_reduce(n-i, &l->bars.arr[i]);
-printf("\nmax %d: %d", i, max);
+// printf("\nmax %d: %d", i, max);
 
     for(int place=starter; place<=max; place++)
     {
-printf("\nnew place %d: %d", i, place);
+// printf("\nnew place %d: %d", i, place);
 
         places[i] = place;
         line_fill(N, line, i+1, places, l->bars.arr, -1);
 
-bit_arr_display(N, l->filter.arr);
-bit_arr_display(N, line);
+// bit_arr_display(N, l->filter.arr);
+// bit_arr_display(N, line);
 
         if(!line_approve(N, line, l->filter.arr))
             continue;
@@ -271,12 +271,12 @@ bit_arr_display(N, tmp);
 
 bit_arr_display(N, line);
 printf("\trem: %d", rem);
-// getchar();
+getchar();
     }
 
 bit_arr_display(N, line);
 printf("\tCONCLUSION!!!!");
-// getchar();
+getchar();
 
     return true;
 }
