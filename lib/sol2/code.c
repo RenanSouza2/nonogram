@@ -14,6 +14,7 @@
 
 #endif
 
+#define goto_pixel(I, J) gotoxy(2 + 2 * (J), 3 + (I));
 
 bool compare = false;
 char *global;
@@ -167,7 +168,6 @@ bool line_approve(int N, char line[], char filter[])
 bool line_init_rec(int i, int starter, int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
-// printf("\nplaces init rec %d %d", i, n);
 
     if(i == n)
     {
@@ -176,17 +176,11 @@ bool line_init_rec(int i, int starter, int N, char line[], int places[], line_in
     }
 
     int max = N + 1 + i - n - int_arr_sum_reduce(n-i, &l->bars.arr[i]);
-// printf("\nmax %d: %d", i, max);
 
     for(int place=starter; place<=max; place++)
     {
-// printf("\nnew place %d: %d", i, place);
-
         places[i] = place;
         line_fill(N, line, i+1, places, l->bars.arr, false);
-
-// bit_arr_display(N, l->filter.arr);
-// bit_arr_display(N, line);
 
         if(!line_approve(N, line, l->filter.arr))
             continue;
@@ -209,8 +203,6 @@ void line_init(int N, char line[], int places[], line_info_p l)
 
 bool line_next_fit(int i, int N, char line[], int places[], line_info_p l)
 {
-printf("\nline next fit %d", i);
-
     int n = l->bars.n;
     int _places[n+1];
     int_arr_set(n+1, _places, places);
@@ -218,14 +210,8 @@ printf("\nline next fit %d", i);
     int bar = l->bars.arr[i];
     int max = places[i+1] - bar;
 
-// printf("\nbar: %d", bar);
-// printf("\ninit: %d", places[i]+1);
-// printf("\nmax: %d", max);
-
     for(int place=places[i]+1; place<max; place++)
     {
-// printf("\nnew place %d: %d", i, place);
-
         _places[i] = place;
         line_set_bar(N, line, place, bar, true);
         if(line_approve(N, line, l->filter.arr))
@@ -239,13 +225,8 @@ bool line_next_rec(int moved[], int i, int N, char line[], int places[], line_in
 {
     int n = l->bars.n;
 
-// printf("\nline next rec %d %d", i, n);
-// getchar();
-
     if(i == n)
         return false;
-
-// printf("\nstill here");
 
     while(line_next_fit(i, N, line, places, l))
     {
@@ -255,26 +236,10 @@ bool line_next_rec(int moved[], int i, int N, char line[], int places[], line_in
             return true;
     } 
     
-    
-
-// printf("\ndid NOT fit");
-
     if(!line_next_rec(moved, i+1, N, line, places, l))
         return false;
     
-// printf("\nexiting %d to %d", i+1, i);
-
     line_fill(N, line, n, places, l->bars.arr, true);
-
-printf("\nHere");
-printf("\n-------");
-bit_arr_display(N, l->filter.arr);
-bit_arr_display(N, line);
-printf("\n-------");
-
-printf("\ni: %d", i);
-printf("\nplaces[i]: %d", places[i]);
-printf("\nverify: %d", line_verify(N, line, l->filter.arr));
 
     if(line_verify(N, line, l->filter.arr) < places[i])
         return true;
@@ -284,7 +249,6 @@ printf("\nverify: %d", line_verify(N, line, l->filter.arr));
 
 bool line_next(int N, char line[], int places[], line_info_p l)
 {
-// printf("\nline next");
     int n = l->bars.n;
 
     for(int i=1; i<=n; i++)
@@ -293,19 +257,12 @@ bool line_next(int N, char line[], int places[], line_info_p l)
         int moved[n];
         int_arr_clean(n, moved);
 
-// printf("\nline next NEW I: %d", i);
-// getchar();
-
         int _places[n+1];
         int_arr_set(n+1, _places, places);
-        if(!line_next_rec(moved, i, N, line, _places, l))
+        if(!line_next_rec(moved, j, N, line, _places, l))
             continue;
         
         line_fill(N, line, n, _places, l->bars.arr, true);
-
-// printf("\nproposal");
-// bit_arr_display(N, l->filter.arr);
-// bit_arr_display(N, line);
 
         if(int_arr_sum_reduce(n, moved) == i)
         if(line_approve(N, line, l->filter.arr))
@@ -322,28 +279,12 @@ bool line_info_scan(int N, char line[], line_info_p l)
     int n = l->bars.n;
     int rem = l->filter.n;
 
-printf("\nline scan");
-printf("\nbars: ");
-for(int i=0; i<l->bars.n; i++)
-    printf(" %d", l->bars.arr[i]);
-printf("\nfilter");
-bit_arr_display(N, l->filter.arr);
-    
     int places[n+1];
     line_init(N, line, places, l);
-
-printf("\nfirst");
-bit_arr_display(N, line);
-// char st = getchar();
 
     char tmp[N];
     while(line_next(N, tmp, places, l))
     {
-printf("\n------------");
-bit_arr_display(N, l->filter.arr);
-bit_arr_display(N, line);
-bit_arr_display(N, tmp);
-
         for(int i=0; i<N; i++)
             if(bit_is_valid(line[i]))
             if(line[i] != tmp[i])
@@ -354,28 +295,14 @@ bit_arr_display(N, tmp);
                 if(rem == 0) 
                 {
 
-printf("\t NO CONCLUSION :(");
-// getchar();
-
                     return false;
                 }
             }
-
-bit_arr_display(N, line);
-printf("\trem: %d", rem);
-// if(st == 'y') 
-// getchar();
     }
 
-    
-for(int i=0; i<N; i++)
-    if(line[i] == l->filter.arr[i])
-        line[i] = -1;
-
-
-bit_arr_display(N, line);
-printf("\tCONCLUSION!!!!");
-// getchar();
+    for(int i=0; i<N; i++)
+        if(line[i] == l->filter.arr[i])
+            line[i] = -1;
 
     return true;
 }
@@ -384,8 +311,9 @@ printf("\tCONCLUSION!!!!");
 
 void step(table_p t, int i, int j, char val)
 {
-    // gotoxy(1 + 2 * j, 2 + i);
-    // bit_display(val);
+    goto_pixel(i, j);
+    bit_display(val);
+    goto_pixel(t->N + 10, t->N + 10);
 
     // clrscr();
     // table_display(t);
@@ -423,8 +351,6 @@ bool table_scan_column(table_p t, int j);
 
 bool table_scan_row(table_p t, int i)
 {
-    printf("\nrow scan %d", i);
-
     int N = t->N;
     // gotoxy(1 + 2 * N + 10, 2 + i);
 
@@ -448,8 +374,6 @@ bool table_scan_row(table_p t, int i)
         scan[j] = true;
     }
 
-    table_display(t);
-
     for(int j=0; j<N; j++)
     if(scan[j])
         if(table_scan_column(t, j))
@@ -460,8 +384,6 @@ bool table_scan_row(table_p t, int i)
 
 bool table_scan_column(table_p t, int j)
 {
-    printf("\ncol scan %d", j);
-
     int N = t->N;
     // gotoxy(1 + 2 * j, 2 + N + 10);
 
@@ -485,8 +407,6 @@ bool table_scan_column(table_p t, int j)
         scan[i] = true;
     }
 
-    table_display(t);
-
     for(int i=0; i<N; i++)
         if(scan[i])
         if(table_scan_row(t, i))
@@ -497,7 +417,7 @@ bool table_scan_column(table_p t, int j)
 
 void table_solve(table_p t)
 {
-    // clrscr();
+    clrscr();
     while(t->rem)
     {
         for(int i=0; i<t->N; i++)
