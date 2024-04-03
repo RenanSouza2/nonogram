@@ -10,7 +10,7 @@ int main(int argc, char **argv)
     setbuf(stdout, NULL);
     assert(argc == 2);
 
-    solution_read(argv[1]);
+    // solution_read(argv[1]);
     
     table_t t;
     table_read(&t, argv[1]);

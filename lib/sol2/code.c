@@ -53,6 +53,11 @@ bit_vec_t bit_vec_create(int n)
     return (bit_vec_t){n, c};
 }
 
+void int_arr_clean(int n, int arr[])
+{
+    memset(arr, 0, n * sizeof(int));
+}
+
 bool int_arr_set(int n, int arr1[], int arr2[])
 {
     memcpy(arr1, arr2, n * sizeof(int));
@@ -230,7 +235,7 @@ printf("\nline next fit %d", i);
     return false;
 }
 
-bool line_next_rec(int i, int N, char line[], int places[], line_info_p l)
+bool line_next_rec(int moved[], int i, int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
 
@@ -244,6 +249,7 @@ bool line_next_rec(int i, int N, char line[], int places[], line_info_p l)
 
     while(line_next_fit(i, N, line, places, l))
     {
+        moved[i] = 1;
         line_fill(N, line, n, places, l->bars.arr, true);
         if(line_verify(N, line, l->filter.arr) < places[i])
             return true;
@@ -253,7 +259,7 @@ bool line_next_rec(int i, int N, char line[], int places[], line_info_p l)
 
 // printf("\ndid NOT fit");
 
-    if(!line_next_rec(i+1, N, line, places, l))
+    if(!line_next_rec(moved, i+1, N, line, places, l))
         return false;
     
 // printf("\nexiting %d to %d", i+1, i);
@@ -273,22 +279,26 @@ printf("\nverify: %d", line_verify(N, line, l->filter.arr));
     if(line_verify(N, line, l->filter.arr) < places[i])
         return true;
     
-    return line_next_rec(i, N, line, places, l);
+    return line_next_rec(moved, i, N, line, places, l);
 }
 
 bool line_next(int N, char line[], int places[], line_info_p l)
 {
 // printf("\nline next");
-
     int n = l->bars.n;
-    for(int i=0; i<n; i++)
+
+    for(int i=1; i<=n; i++)
+    for(int j=0; j<n; j++)
     {
+        int moved[n];
+        int_arr_clean(n, moved);
+
 // printf("\nline next NEW I: %d", i);
 // getchar();
 
         int _places[n+1];
         int_arr_set(n+1, _places, places);
-        if(!line_next_rec(i, N, line, _places, l))
+        if(!line_next_rec(moved, i, N, line, _places, l))
             continue;
         
         line_fill(N, line, n, _places, l->bars.arr, true);
@@ -297,6 +307,7 @@ bool line_next(int N, char line[], int places[], line_info_p l)
 // bit_arr_display(N, l->filter.arr);
 // bit_arr_display(N, line);
 
+        if(int_arr_sum_reduce(n, moved) == i)
         if(line_approve(N, line, l->filter.arr))
             return int_arr_set(n+1, places, _places);
     }
