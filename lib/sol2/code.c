@@ -318,7 +318,7 @@ void step(table_p t, int i, int j, char val)
     // clrscr();
     // table_display(t);
 
-    // struct timespec spec = (struct timespec){0, 1e6};
+    // struct timespec spec = (struct timespec){0, 5e7};
     // nanosleep(&spec, NULL);
 }
 
@@ -352,7 +352,6 @@ bool table_scan_column(table_p t, int j);
 bool table_scan_row(table_p t, int i)
 {
     int N = t->N;
-    // gotoxy(1 + 2 * N + 10, 2 + i);
 
     char set[N];
     if(!line_info_scan(N, set, &t->r[i]))
@@ -385,7 +384,6 @@ bool table_scan_row(table_p t, int i)
 bool table_scan_column(table_p t, int j)
 {
     int N = t->N;
-    // gotoxy(1 + 2 * j, 2 + N + 10);
 
     char set[N];
     if(!line_info_scan(N, set, &t->c[j]))
@@ -418,6 +416,8 @@ bool table_scan_column(table_p t, int j)
 void table_solve(table_p t)
 {
     clrscr();
+    table_display(t);
+
     while(t->rem)
     {
         for(int i=0; i<t->N; i++)
