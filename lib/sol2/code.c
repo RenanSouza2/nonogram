@@ -15,6 +15,27 @@
 #endif
 
 
+bool compare = false;
+char *global;
+
+void solution_read(char name[])
+{
+    char _name[50];
+    snprintf(_name, 50, "res/res%s.txt", name);
+    FILE *fp = file_open(_name);
+
+    int N = int_read(fp);
+    global = bit_m_create(N);
+    for(int i=0; i<N; i++)
+    for(int j=0; j<N; j++)
+    {
+        char val = int_read(fp);
+        bit_m_set(global, N, i, j, val);
+    }
+
+    compare = true;
+}
+
 
 void table_display(table_p t)
 {
@@ -87,7 +108,9 @@ line_info_p line_info_arr_read(FILE *fp, int N)
 
 void table_read(table_p t, char name[])
 {
-    FILE *fp = file_open(name);
+    char _name[50];
+    snprintf(_name, 50, "tables/table%s.txt", name);
+    FILE *fp = file_open(_name);
 
     int N = int_read(fp);
     char_read(fp);
@@ -177,6 +200,8 @@ void line_init(int N, char line[], int places[], line_info_p l)
     places[l->bars.n] = N+1;
 }
 
+
+
 bool line_next_fit(int i, int N, char line[], int places[], line_info_p l)
 {
 // printf("\nline next fit %d", i);
@@ -217,33 +242,22 @@ bool line_next_rec(int i, int N, char line[], int places[], line_info_p l)
 
 // printf("\nstill here");
 
-    int _places[n+1];
-    int_arr_set(n+1, _places, places);
     if(line_next_fit(i, N, line, places, l))
-        return int_arr_set(n+1, _places, places);
+        return true;
 
 // printf("\ndid NOT fit");
 
-    int_arr_set(n+1, _places, places);
-    if(!line_next_rec(i+1, N, line, _places, l))
+    int_arr_set(n+1, places, places);
+    if(!line_next_rec(i+1, N, line, places, l))
         return false;
     
 // printf("\nexiting %d to %d", i+1, i);
 
-    do
-    {
-        line_fill(N, line, n, _places, l->bars.arr, true);
-
-// printf("\n-------");
-// bit_arr_display(N, l->filter.arr);
-// bit_arr_display(N, line);
-
-        if(line_verify(N, line, l->filter.arr) < _places[i])
-            return int_arr_set(n+1, places, _places);
-    } while(line_next_rec(i, N, line, _places, l));
-
-// printf("\nFailure");
-    return false;
+    line_fill(N, line, n, places, l->bars.arr, true);
+    if(line_verify(N, line, l->filter.arr) < places[i])
+        return true;
+    
+    return line_next_rec(i, N, line, places, l);
 }
 
 bool line_next(int N, char line[], int places[], line_info_p l)
@@ -275,32 +289,33 @@ bool line_next(int N, char line[], int places[], line_info_p l)
 }
 
 
+
 bool line_info_scan(int N, char line[], line_info_p l)
 {
     int n = l->bars.n;
     int rem = l->filter.n;
 
-// printf("\nline scan");
-// printf("\nbars: ");
-// for(int i=0; i<l->bars.n; i++)
-//     printf(" %d", l->bars.arr[i]);
-// printf("\nfilter");
-// bit_arr_display(N, l->filter.arr);
+printf("\nline scan");
+printf("\nbars: ");
+for(int i=0; i<l->bars.n; i++)
+    printf(" %d", l->bars.arr[i]);
+printf("\nfilter");
+bit_arr_display(N, l->filter.arr);
     
     int places[n+1];
     line_init(N, line, places, l);
 
-// printf("\nfirst");
-// bit_arr_display(N, line);
+printf("\nfirst");
+bit_arr_display(N, line);
 // char st = getchar();
 
     char tmp[N];
     while(line_next(N, tmp, places, l))
     {
-// printf("\n------------");
-// bit_arr_display(N, l->filter.arr);
-// bit_arr_display(N, line);
-// bit_arr_display(N, tmp);
+printf("\n------------");
+bit_arr_display(N, l->filter.arr);
+bit_arr_display(N, line);
+bit_arr_display(N, tmp);
 
         for(int i=0; i<N; i++)
             if(bit_is_valid(line[i]))
@@ -312,15 +327,15 @@ bool line_info_scan(int N, char line[], line_info_p l)
                 if(rem == 0) 
                 {
 
-// printf("\t NO CONCLUSION :(");
+printf("\t NO CONCLUSION :(");
 // getchar();
 
                     return false;
                 }
             }
 
-// bit_arr_display(N, line);
-// printf("\trem: %d", rem);
+bit_arr_display(N, line);
+printf("\trem: %d", rem);
 // if(st == 'y') 
 // getchar();
     }
@@ -331,8 +346,8 @@ for(int i=0; i<N; i++)
         line[i] = -1;
 
 
-// bit_arr_display(N, line);
-// printf("\tCONCLUSION!!!!");
+bit_arr_display(N, line);
+printf("\tCONCLUSION!!!!");
 // getchar();
 
     return true;
@@ -360,6 +375,12 @@ void filter_set(bit_vec_p b, int i, char val)
 
 bool table_set(table_p t, int i, int j, char val)
 {
+    if(compare)
+    {
+        char _val = bit_m_get(global, t->N, i, j);
+        assert(_val == val);
+    }
+
     t->rem--;
     bit_m_set(t->res, t->N, i, j, val);
     filter_set(&t->r[i].filter, j, val);
