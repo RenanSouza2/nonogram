@@ -204,7 +204,7 @@ void line_init(int N, char line[], int places[], line_info_p l)
 
 bool line_next_fit(int i, int N, char line[], int places[], line_info_p l)
 {
-// printf("\nline next fit %d", i);
+printf("\nline next fit %d", i);
 
     int n = l->bars.n;
     int _places[n+1];
@@ -242,18 +242,34 @@ bool line_next_rec(int i, int N, char line[], int places[], line_info_p l)
 
 // printf("\nstill here");
 
-    if(line_next_fit(i, N, line, places, l))
-        return true;
+    while(line_next_fit(i, N, line, places, l))
+    {
+        line_fill(N, line, n, places, l->bars.arr, true);
+        if(line_verify(N, line, l->filter.arr) < places[i])
+            return true;
+    } 
+    
+    
 
 // printf("\ndid NOT fit");
 
-    int_arr_set(n+1, places, places);
     if(!line_next_rec(i+1, N, line, places, l))
         return false;
     
 // printf("\nexiting %d to %d", i+1, i);
 
     line_fill(N, line, n, places, l->bars.arr, true);
+
+printf("\nHere");
+printf("\n-------");
+bit_arr_display(N, l->filter.arr);
+bit_arr_display(N, line);
+printf("\n-------");
+
+printf("\ni: %d", i);
+printf("\nplaces[i]: %d", places[i]);
+printf("\nverify: %d", line_verify(N, line, l->filter.arr));
+
     if(line_verify(N, line, l->filter.arr) < places[i])
         return true;
     
