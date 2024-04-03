@@ -179,7 +179,7 @@ void line_init(int N, char line[], int places[], line_info_p l)
 
 bool line_next_fit(int i, int N, char line[], int places[], line_info_p l)
 {
-printf("\nline next fit %d", i);
+// printf("\nline next fit %d", i);
 
     int n = l->bars.n;
     int _places[n+1];
@@ -188,13 +188,13 @@ printf("\nline next fit %d", i);
     int bar = l->bars.arr[i];
     int max = places[i+1] - bar;
 
-printf("\nbar: %d", bar);
-printf("\ninit: %d", places[i]+1);
-printf("\nmax: %d", max);
+// printf("\nbar: %d", bar);
+// printf("\ninit: %d", places[i]+1);
+// printf("\nmax: %d", max);
 
     for(int place=places[i]+1; place<max; place++)
     {
-printf("\nnew place %d: %d", i, place);
+// printf("\nnew place %d: %d", i, place);
 
         _places[i] = place;
         line_set_bar(N, line, place, bar, true);
@@ -209,51 +209,51 @@ bool line_next_rec(int i, int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
 
-printf("\nline next rec %d %d", i, n);
+// printf("\nline next rec %d %d", i, n);
 // getchar();
 
     if(i == n)
         return false;
 
-printf("\nstill here");
+// printf("\nstill here");
 
     int _places[n+1];
     int_arr_set(n+1, _places, places);
     if(line_next_fit(i, N, line, places, l))
         return int_arr_set(n+1, _places, places);
 
-printf("\ndid NOT fit");
+// printf("\ndid NOT fit");
 
     int_arr_set(n+1, _places, places);
     if(!line_next_rec(i+1, N, line, _places, l))
         return false;
     
-printf("\nexiting %d to %d", i+1, i);
+// printf("\nexiting %d to %d", i+1, i);
 
     do
     {
         line_fill(N, line, n, _places, l->bars.arr, true);
 
-printf("\n-------");
-bit_arr_display(N, l->filter.arr);
-bit_arr_display(N, line);
+// printf("\n-------");
+// bit_arr_display(N, l->filter.arr);
+// bit_arr_display(N, line);
 
-        if(line_verify(N, line, l->filter.arr) < places[i])
+        if(line_verify(N, line, l->filter.arr) < _places[i])
             return int_arr_set(n+1, places, _places);
     } while(line_next_rec(i, N, line, _places, l));
 
-printf("\nFailure");
+// printf("\nFailure");
     return false;
 }
 
 bool line_next(int N, char line[], int places[], line_info_p l)
 {
-printf("\nline next");
+// printf("\nline next");
 
     int n = l->bars.n;
     for(int i=0; i<n; i++)
     {
-printf("\nline next NEW I: %d", i);
+// printf("\nline next NEW I: %d", i);
 // getchar();
 
         int _places[n+1];
@@ -263,9 +263,9 @@ printf("\nline next NEW I: %d", i);
         
         line_fill(N, line, n, _places, l->bars.arr, true);
 
-printf("\nproposal");
-bit_arr_display(N, l->filter.arr);
-bit_arr_display(N, line);
+// printf("\nproposal");
+// bit_arr_display(N, l->filter.arr);
+// bit_arr_display(N, line);
 
         if(line_approve(N, line, l->filter.arr))
             return int_arr_set(n+1, places, _places);
@@ -280,27 +280,27 @@ bool line_info_scan(int N, char line[], line_info_p l)
     int n = l->bars.n;
     int rem = l->filter.n;
 
-printf("\nline scan");
-printf("\nbars: ");
-for(int i=0; i<l->bars.n; i++)
-    printf(" %d", l->bars.arr[i]);
-printf("\nfilter");
-bit_arr_display(N, l->filter.arr);
+// printf("\nline scan");
+// printf("\nbars: ");
+// for(int i=0; i<l->bars.n; i++)
+//     printf(" %d", l->bars.arr[i]);
+// printf("\nfilter");
+// bit_arr_display(N, l->filter.arr);
     
     int places[n+1];
     line_init(N, line, places, l);
 
-printf("\nfirst");
-bit_arr_display(N, line);
+// printf("\nfirst");
+// bit_arr_display(N, line);
 // char st = getchar();
 
     char tmp[N];
     while(line_next(N, tmp, places, l))
     {
-printf("\n------------");
-bit_arr_display(N, l->filter.arr);
-bit_arr_display(N, line);
-bit_arr_display(N, tmp);
+// printf("\n------------");
+// bit_arr_display(N, l->filter.arr);
+// bit_arr_display(N, line);
+// bit_arr_display(N, tmp);
 
         for(int i=0; i<N; i++)
             if(bit_is_valid(line[i]))
@@ -312,16 +312,17 @@ bit_arr_display(N, tmp);
                 if(rem == 0) 
                 {
 
-printf("\t NO CONCLUSION :(");
+// printf("\t NO CONCLUSION :(");
 // getchar();
 
                     return false;
                 }
             }
 
-bit_arr_display(N, line);
-printf("\trem: %d", rem);
-// if(st == 'y') getchar();
+// bit_arr_display(N, line);
+// printf("\trem: %d", rem);
+// if(st == 'y') 
+// getchar();
     }
 
     
@@ -330,13 +331,12 @@ for(int i=0; i<N; i++)
         line[i] = -1;
 
 
-bit_arr_display(N, line);
-printf("\tCONCLUSION!!!!");
+// bit_arr_display(N, line);
+// printf("\tCONCLUSION!!!!");
 // getchar();
 
     return true;
 }
-
 
 
 

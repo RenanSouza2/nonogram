@@ -97,11 +97,11 @@ void test_sol2_line_scan_4()
 {
     printf("\n\t%s", __func__);
 
-    int N = 30;
-    int n = 3;
+    int N = 20;
+    int n = 4;
 
 
-    int bars[7] = {5, 1, 1, 1, 3, 1, 2};
+    int bars[7] = {2, 3, 2, 2};
     int places[8] = {6, 12, 16, 18, 20, 24, 26, 31};
     
     printf("\nbars: ");
@@ -139,7 +139,8 @@ void test_sol2()
 
     // test_sol2_line_scan_1();
     // test_sol2_line_scan_2();
-    test_sol2_line_scan_3();
+    // test_sol2_line_scan_3();
+    test_sol2_line_scan_4();
 
     assert(clu_mem_empty());
 }
