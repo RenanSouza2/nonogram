@@ -145,7 +145,7 @@ void test_sol2_line_scan_5()
     for(int i=0; i<n; i++)
         printf(" %d", bars[i]);
 
-    char filter[30] = {
+    char filter[50] = {
          0,  0,  0, -1, -1, -1, -1, -1, -1, -1,
         -1,  0, -1,  1, -1, -1, -1, -1, -1, -1,
         -1, -1,  0, -1, -1, -1, -1,  0,  0, -1,
@@ -157,6 +157,7 @@ void test_sol2_line_scan_5()
     line_info_t l = (line_info_t){{n, bars}, {25, filter}};
 
     char line[N];
+    int places[n+1];
     line_fill(N, line, n, places, bars, true);
     bit_arr_display(N, line);
 
@@ -179,7 +180,7 @@ void test_sol2()
     // test_sol2_line_scan_2();
     // test_sol2_line_scan_3();
     // test_sol2_line_scan_4();
-    test_sol2_line_scan_5();
+    // test_sol2_line_scan_5();
 
     assert(clu_mem_empty());
 }
