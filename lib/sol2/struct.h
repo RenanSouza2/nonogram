@@ -19,6 +19,18 @@ STRUCT(line_info)
 {
     int_vec_t bars;
     bit_vec_t filter;
+    int h;
+};
+
+#define ROW 0
+#define COLUMN 1
+
+STRUCT(scan)
+{
+    int n;
+    int type;
+    int i;
+    scan_p s;
 };
 
 STRUCT(table)
@@ -31,6 +43,8 @@ STRUCT(table)
     char* res;
 
     int rem;
+
+    scan_p s;
 };
 
 #endif

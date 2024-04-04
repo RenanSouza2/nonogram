@@ -100,7 +100,8 @@ line_info_t line_info_read(FILE *fp, int N)
     int_vec_t _bars = int_vec_create(n, bars);
     bit_vec_t _filter = bit_vec_create(N);
 
-    return (line_info_t){_bars, _filter};
+    int tot = N + 1 - n - int_arr_sum_reduce(n, _bars.arr);
+    return (line_info_t){_bars, _filter, n * tot};
 }
 
 line_info_p line_info_arr_read(FILE *fp, int N)
@@ -126,7 +127,7 @@ void table_read(table_p t, char name[])
     char* res = bit_m_create(N);
 
     int rem = N * N;
-    *t = (table_t){N, l, c, res, rem};
+    *t = (table_t){N, l, c, res, rem, NULL};
 }
 
 
@@ -330,7 +331,6 @@ void step(table_p t, int i, int j, char val)
     goto_pixel(i, j);
     bit_display(val);
 
-    // clrscr();
     // table_display(t);
 
     // struct timespec spec = (struct timespec){0, 1e8};
@@ -362,7 +362,58 @@ bool table_set(table_p t, int i, int j, char val)
 
 
 
-bool table_scan_column(table_p t, int j);
+void scan_display(scan_p s)
+{
+    for(; s; s = s->s)
+        printf("\n%d %d %d", s->n, s->type, s->i);
+}
+
+scan_p scan_create(int n, int type, int i, scan_p s_next)
+{
+    scan_p s = malloc(sizeof(scan_t));
+    assert(s);
+
+    *s = (scan_t){n, type, i, s_next};
+    return s;
+}
+
+void scan_add(scan_p *s, int n, int type, int i)
+{
+    scan_p _s = *s;
+    if(_s == NULL || _s->n > n)
+    {
+        *s = scan_create(n, type, i, _s);
+        return;
+    }
+
+    if(_s->type == type && _s->i == i)
+        return;
+
+    return scan_add(&_s->s, n, type, i);
+}
+
+void table_scan_add(table_p t, int type, int i)
+{
+    line_info_t l;
+    switch (type)
+    {
+        case ROW   : l = t->r[i]; break;
+        case COLUMN: l = t->c[i]; break;
+        default: assert(false);
+    }
+
+    scan_add(&t->s, l.h, type, i);
+}
+
+scan_p table_scan_pop(table_p t)
+{
+    scan_p s = t->s;
+    assert(s);
+    t->s = s->s;
+    return s;
+}
+
+
 
 bool table_scan_row(table_p t, int i)
 {
@@ -376,13 +427,12 @@ bool table_scan_row(table_p t, int i)
 
     for(int j=0; j<N; j++)
     if(bit_is_valid(set[j]))
+    {
         if(table_set(t, i, j, set[j]))
             return true;
-
-    for(int j=0; j<N; j++)
-    if(bit_is_valid(set[j]))
-        if(table_scan_column(t, j))
-            return true;
+        
+        table_scan_add(t, COLUMN, j);
+    }
 
     return false;
 }
@@ -399,39 +449,36 @@ bool table_scan_column(table_p t, int j)
     
     for(int i=0; i<N; i++)
     if(bit_is_valid(set[i]))
+    {
         if(table_set(t, i, j, set[i]))
             return true;
 
-    for(int i=0; i<N; i++)
-    if(bit_is_valid(set[i]))
-        if(table_scan_row(t, i))
-            return true;
-
-    return false;
-}
-
-bool table_scan_rows(table_p t)
-{
-    for(int i=0; i<t->N; i++)
-        if(table_scan_row(t, i)) 
-            return true;
-
-    return false;
-}
-
-bool table_scan_columns(table_p t)
-{
-    for(int i=0; i<t->N; i++)
-        if(table_scan_column(t, i)) 
-            return true;
+        table_scan_add(t, ROW, i);
+    }
 
     return false;
 }
 
 bool table_scan(table_p t)
 {
-    if(table_scan_rows(t)) return true;
-    if(table_scan_columns(t)) return true;
+    while(t->rem)
+    {
+        scan_p s = table_scan_pop(t);
+        switch (s->type)
+        {
+            case ROW: 
+                if(table_scan_row(t, s->i))
+                    return true;
+            break;
+
+            case COLUMN: 
+                if(table_scan_column(t, s->i))
+                    return true;
+            break;
+
+            default: assert(false);
+        }
+    }
 
     return false;
 }
@@ -440,6 +487,12 @@ void table_solve(table_p t)
 {
     clrscr();
     table_display(t);
+
+    for(int i=0; i<t->N; i++)
+    {
+        table_scan_add(t, ROW, i);
+        table_scan_add(t, COLUMN, i);
+    }
 
     assert(table_scan(t));
 
