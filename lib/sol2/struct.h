@@ -22,17 +22,6 @@ STRUCT(line_info)
     int h;
 };
 
-#define ROW 0
-#define COLUMN 1
-
-STRUCT(scan)
-{
-    int n;
-    int type;
-    int i;
-    scan_p s;
-};
-
 STRUCT(table)
 {
     int N;
@@ -43,8 +32,6 @@ STRUCT(table)
     char* res;
 
     int rem;
-
-    scan_p s;
 };
 
 #endif
