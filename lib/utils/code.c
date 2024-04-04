@@ -104,21 +104,35 @@ void bit_display(char c)
     {
         case -1: printf("  "); return;
         case  0: printf("░░"); return;
-        case  1: printf("▓▓"); return;
+        case  1: printf("██"); return;
     }
+    
+    printf("\nINVALID BIT: %d", c);
+    assert(false);
 }
 
 void bit_arr_display(int N, char c[])
 {
-    printf("\n");
+    printf("\n|");
     for(int i=0; i<N; i++)
         bit_display(c[i]);
+    printf("|");
 }
 
 void bit_m_display(int N, char c[])
 {
+    printf("\n┌");
+    for(int i=0; i<N; i++)
+        printf("──");
+    printf("┐");
+
     for(int i=0; i<N; i++)
         bit_arr_display(N, &c[N * i]);
+
+    printf("\n└");
+    for(int i=0; i<N; i++)
+        printf("──");
+    printf("┘");
 }
 
 
