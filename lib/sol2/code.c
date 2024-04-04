@@ -333,7 +333,7 @@ void step(table_p t, int i, int j, char val)
     // clrscr();
     // table_display(t);
 
-    // struct timespec spec = (struct timespec){0, 5e7};
+    // struct timespec spec = (struct timespec){0, 1e8};
     // nanosleep(&spec, NULL);
 }
 
@@ -374,24 +374,13 @@ bool table_scan_row(table_p t, int i)
     if(!line_info_scan(N, set, &t->r[i]))
         return false;
 
-    char scan[N];
-    memset(scan, 0, N);
-
     for(int j=0; j<N; j++)
-    {
-        if(bit_is_valid(bit_m_get(t->res, N, i, j))) continue;
-
-        char val = set[j];
-        if(!bit_is_valid(val)) continue;
-
-        if(table_set(t, i, j, val))
+    if(bit_is_valid(set[j]))
+        if(table_set(t, i, j, set[j]))
             return true;
 
-        scan[j] = true;
-    }
-
     for(int j=0; j<N; j++)
-    if(scan[j])
+    if(bit_is_valid(set[j]))
         if(table_scan_column(t, j))
             return true;
 
@@ -408,26 +397,41 @@ bool table_scan_column(table_p t, int j)
     if(!line_info_scan(N, set, &t->c[j]))
         return false;
     
-    char scan[N];
-    memset(scan, 0, N);
-
     for(int i=0; i<N; i++)
-    {
-        if(bit_is_valid(bit_m_get(t->res, N, i, j))) continue;
-
-        char val = set[i];
-        if(!bit_is_valid(val)) continue;
-
-        if(table_set(t, i, j, val))
+    if(bit_is_valid(set[i]))
+        if(table_set(t, i, j, set[i]))
             return true;
 
-        scan[i] = true;
-    }
-
     for(int i=0; i<N; i++)
-        if(scan[i])
+    if(bit_is_valid(set[i]))
         if(table_scan_row(t, i))
             return true;
+
+    return false;
+}
+
+bool table_scan_rows(table_p t)
+{
+    for(int i=0; i<t->N; i++)
+        if(table_scan_row(t, i)) 
+            return true;
+
+    return false;
+}
+
+bool table_scan_columns(table_p t)
+{
+    for(int i=0; i<t->N; i++)
+        if(table_scan_column(t, i)) 
+            return true;
+
+    return false;
+}
+
+bool table_scan(table_p t)
+{
+    if(table_scan_rows(t)) return true;
+    if(table_scan_columns(t)) return true;
 
     return false;
 }
@@ -437,14 +441,7 @@ void table_solve(table_p t)
     clrscr();
     table_display(t);
 
-    while(t->rem)
-    {
-        for(int i=0; i<t->N; i++)
-            if(table_scan_row(t, i)) 
-                return;
+    assert(table_scan(t));
 
-        for(int j=0; j<t->N; j++)
-            if(table_scan_column(t, j)) 
-                return;
-    }
+    goto_pixel(t->N + 10, 0);
 }
