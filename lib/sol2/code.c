@@ -251,22 +251,38 @@ bool line_next(int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
 
-    for(int i=1; i<=n; i++)
-    for(int j=0; j<n; j++)
+    int mov_c = n+1;
+    int places_c[n+1];
+
+    for(int i=0; i<n; i++)
     {
         int moved[n];
         int_arr_clean(n, moved);
 
         int _places[n+1];
         int_arr_set(n+1, _places, places);
-        if(!line_next_rec(moved, j, N, line, _places, l))
+        if(!line_next_rec(moved, i, N, line, _places, l))
             continue;
         
         line_fill(N, line, n, _places, l->bars.arr, true);
+        if(!line_approve(N, line, l->filter.arr))
+            continue;
 
-        if(int_arr_sum_reduce(n, moved) == i)
-        if(line_approve(N, line, l->filter.arr))
+        int mov = int_arr_sum_reduce(n, moved);
+        if(mov == 1)
             return int_arr_set(n+1, places, _places);
+
+        if(mov >= mov_c)
+            continue;
+
+        mov_c = mov;
+        int_arr_set(n+1, places_c, _places); 
+    }
+
+    if(mov_c < n+1)
+    {
+        line_fill(N, line, n, places_c, l->bars.arr, true);
+        return int_arr_set(n+1, places, places_c);
     }
     
     return false;
@@ -313,7 +329,6 @@ void step(table_p t, int i, int j, char val)
 {
     goto_pixel(i, j);
     bit_display(val);
-    goto_pixel(t->N + 10, t->N + 10);
 
     // clrscr();
     // table_display(t);
@@ -353,6 +368,8 @@ bool table_scan_row(table_p t, int i)
 {
     int N = t->N;
 
+    goto_pixel(i, N+10);
+
     char set[N];
     if(!line_info_scan(N, set, &t->r[i]))
         return false;
@@ -384,6 +401,8 @@ bool table_scan_row(table_p t, int i)
 bool table_scan_column(table_p t, int j)
 {
     int N = t->N;
+
+    goto_pixel(N+10, j);
 
     char set[N];
     if(!line_info_scan(N, set, &t->c[j]))
