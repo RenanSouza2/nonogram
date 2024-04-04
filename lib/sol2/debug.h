@@ -10,6 +10,6 @@
 
 void line_init(int N, char line[], int places[], line_info_p l);
 bool line_next(int N, char line[], int places[], line_info_p l);
-void line_fill(int N, char line[], int n, int places[], int bars[], bool fill);
+void line_fill(int N, char line[], int n, int places[], int bars[]);
 
 #endif

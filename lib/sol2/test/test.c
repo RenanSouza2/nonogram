@@ -20,7 +20,7 @@ void test_sol2_line_scan_1()
     line_info_t l = (line_info_t){{2, bars}, {8, filter}};
 
     char line[10];
-    line_fill(N, line, n, places, bars, true);
+    line_fill(N, line, n, places, bars);
     bit_arr_display(N, filter);
     bit_arr_display(N, line);
 
@@ -45,7 +45,7 @@ void test_sol2_line_scan_2()
     line_info_t l = (line_info_t){{2, bars}, {8, filter}};
 
     char line[10];
-    line_fill(N, line, n, places, bars, true);
+    line_fill(N, line, n, places, bars);
     bit_arr_display(N, filter);
     bit_arr_display(N, line);
 
@@ -81,7 +81,7 @@ void test_sol2_line_scan_3()
     line_info_t l = (line_info_t){{n, bars}, {25, filter}};
 
     char line[N];
-    line_fill(N, line, n, places, bars, true);
+    line_fill(N, line, n, places, bars);
     bit_arr_display(N, line);
 
     assert(line_next(N, line, places, &l));
