@@ -316,7 +316,7 @@ void step(table_p t, int i, int j, char val)
 
     // table_display(t);
 
-    // struct timespec spec = (struct timespec){0, 1e8};
+    // struct timespec spec = (struct timespec){0, 5e7};
     // nanosleep(&spec, NULL);
 }
 
@@ -350,6 +350,8 @@ bool table_scan_row(table_p t, int i)
     int N = t->N;
 
     goto_pixel(i, N+10);
+    bit_display(-1);
+    goto_pixel(i, N+10);
 
     char set[N];
     if(!line_info_scan(N, set, &t->r[i]))
@@ -361,7 +363,9 @@ bool table_scan_row(table_p t, int i)
         if(table_set(t, i, j, set[j]))
             return true;
         
-        t->c[j].h++;
+        t->c[j].h = 1;
+        goto_pixel(N + 10, j);
+        bit_display(1);
     }
 
     return false;
@@ -371,6 +375,8 @@ bool table_scan_column(table_p t, int j)
 {
     int N = t->N;
 
+    goto_pixel(N+10, j);
+    bit_display(-1);
     goto_pixel(N+10, j);
 
     char set[N];
@@ -383,7 +389,9 @@ bool table_scan_column(table_p t, int j)
         if(table_set(t, i, j, set[i]))
             return true;
 
-        t->r[i].h++;
+        t->r[i].h = 1;
+        goto_pixel(i, N + 10);
+        bit_display(1);
     }
 
     return false;
