@@ -11,6 +11,9 @@
 
 PLACEHOLDER(table);
 
+void fbit_display(FILE *fp, char c);
+void fbit_arr_display(FILE *fp, int N, char c[]);
+
 void bit_display(char c);
 void bit_arr_display(int N, char c[]);
 void bit_m_display(int N, char c[]);

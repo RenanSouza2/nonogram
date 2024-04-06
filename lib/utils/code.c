@@ -98,25 +98,35 @@ bool int_arr_test(int spaces[], int n, ...)
 
 
 
-void bit_display(char c)
+void fbit_display(FILE *fp, char c)
 {
     switch (c)
     {
-        case -1: printf("  "); return;
-        case  0: printf("░░"); return;
-        case  1: printf("██"); return;
+        case -1: fprintf(fp, "  "); return;
+        case  0: fprintf(fp, "░░"); return;
+        case  1: fprintf(fp, "██"); return;
     }
     
-    printf("\nINVALID BIT: %d", c);
+    fprintf(fp, "\nINVALID BIT: %d", c);
     assert(false);
+}
+
+void fbit_arr_display(FILE *fp, int N, char c[])
+{
+    fprintf(fp, "\n|");
+    for(int i=0; i<N; i++)
+        fbit_display(fp, c[i]);
+    fprintf(fp, "|");
+}
+
+void bit_display(char c)
+{
+    fbit_display(stdout, c);
 }
 
 void bit_arr_display(int N, char c[])
 {
-    printf("\n|");
-    for(int i=0; i<N; i++)
-        bit_display(c[i]);
-    printf("|");
+    fbit_arr_display(stdout, N, c);
 }
 
 void bit_m_display(int N, char c[])

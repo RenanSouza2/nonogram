@@ -19,6 +19,36 @@
 bool compare = false;
 char *global;
 
+clock_t largest = 0;
+
+
+FILE *fp_global = NULL;
+void save(clock_t start, clock_t end, int N, line_info_p l)
+{
+    clock_t diff = end - start;
+    if(diff <= largest) return;
+    largest = diff;
+
+    if(fp_global == NULL)
+    {
+        fp_global = fopen("out.txt", "w");
+        assert(fp_global);
+
+        setbuf(fp_global, NULL);
+    }
+
+    fprintf(fp_global, "\n");
+    fprintf(fp_global, "\ndiff: %lu", diff);
+
+    int_vec_t bars = l->bars;
+    fprintf(fp_global, "\nn: %d", bars.n);
+    fprintf(fp_global, "\nbars: ");
+    for(int i=0; i<bars.n; i++)
+        fprintf(fp_global, "%d ", bars.arr[i]);
+
+    fbit_arr_display(fp_global, N, l->filter.arr);
+}
+
 void solution_read(char name[])
 {
     char _name[50];
@@ -36,6 +66,7 @@ void solution_read(char name[])
 
     compare = true;
 }
+
 
 
 void table_display(table_p t)
@@ -196,9 +227,7 @@ bool line_next_fit(int i, int N, char line[], int places[], line_info_p l)
 bool line_next_rec(int moved[], int i, int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
-
-    if(i == n)
-        return false;
+    if(i == n) return false;
 
     while(line_next_fit(i, N, line, places, l))
     {
@@ -213,7 +242,6 @@ bool line_next_rec(int moved[], int i, int N, char line[], int places[], line_in
         return false;
     
     line_fill(N, line, n, places, l->bars.arr);
-
     if(line_verify(N, line, l->filter.arr) < places[i])
         return true;
     
@@ -283,6 +311,8 @@ bool line_next(int N, char line[], int places[], line_info_p l)
 
 bool line_info_scan(int N, char line[], line_info_p l)
 {
+    clock_t start = clock();
+
     int n = l->bars.n;
     int rem = l->filter.n;
 
@@ -293,24 +323,27 @@ bool line_info_scan(int N, char line[], line_info_p l)
     while(line_next(N, tmp, places, l))
     {
         for(int i=0; i<N; i++)
-            if(bit_is_valid(line[i]))
-            if(line[i] != tmp[i])
+        if(bit_is_valid(line[i]))
+        if(line[i] != tmp[i])
+        {
+            line[i] = -1;
+            rem--;
+
+            if(rem == 0)
             {
-                line[i] = -1;
-                rem--;
-
-                if(rem == 0) 
-                {
-
-                    return false;
-                }
+                clock_t end = clock();
+                save(start, end, N, l);
+                return false;
             }
+        }
     }
 
     for(int i=0; i<N; i++)
         if(line[i] == l->filter.arr[i])
             line[i] = -1;
 
+    clock_t end = clock();
+    save(start, end, N, l);
     return true;
 }
 
