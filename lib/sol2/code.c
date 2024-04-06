@@ -40,6 +40,13 @@ void solution_read(char name[])
 
 void table_display(table_p t)
 {
+    for(int i=0; i<t->N; i++)
+    {
+        goto_pixel(i, t->N + 1);
+        printf("%3d", i);
+    }
+    goto_pixel(-2,0)
+
     bit_m_display(t->N, t->res);
 }
 
@@ -349,9 +356,9 @@ bool table_scan_row(table_p t, int i)
 {
     int N = t->N;
 
-    goto_pixel(i, N+10);
+    goto_pixel(i, N+5);
     bit_display(-1);
-    goto_pixel(i, N+10);
+    goto_pixel(i, N+5);
 
     char set[N];
     if(!line_info_scan(N, set, &t->r[i]))
@@ -364,7 +371,7 @@ bool table_scan_row(table_p t, int i)
             return true;
         
         t->c[j].h = 1;
-        goto_pixel(N + 10, j);
+        goto_pixel(N+5, j);
         bit_display(1);
     }
 
@@ -375,9 +382,9 @@ bool table_scan_column(table_p t, int j)
 {
     int N = t->N;
 
-    goto_pixel(N+10, j);
+    goto_pixel(N+5, j);
     bit_display(-1);
-    goto_pixel(N+10, j);
+    goto_pixel(N+5, j);
 
     char set[N];
     if(!line_info_scan(N, set, &t->c[j]))
@@ -390,7 +397,7 @@ bool table_scan_column(table_p t, int j)
             return true;
 
         t->r[i].h = 1;
-        goto_pixel(i, N + 10);
+        goto_pixel(i, N+5);
         bit_display(1);
     }
 
@@ -429,5 +436,5 @@ void table_solve(table_p t)
 
     assert(table_scan(t));
 
-    goto_pixel(t->N + 10, 0);
+    goto_pixel(t->N + 6, 0);
 }
