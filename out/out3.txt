@@ -1,0 +1,26 @@
+
+
+diff: 7
+n: 1
+bars: 5 
+|                                        |
+
+diff: 11
+n: 3
+bars: 4 4 4 
+|                                        |
+
+diff: 15
+n: 5
+bars: 4 2 1 2 4 
+|                                        |
+
+diff: 38
+n: 7
+bars: 1 1 1 2 1 1 1 
+|                                        |
+
+diff: 54
+n: 7
+bars: 1 1 1 2 1 1 1 
+|                    ██                  |

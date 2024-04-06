@@ -1,0 +1,16 @@
+
+
+diff: 4
+n: 1
+bars: 2 
+|                    |
+
+diff: 5
+n: 2
+bars: 2 2 
+|                    |
+
+diff: 6
+n: 3
+bars: 2 1 1 
+|                    |
