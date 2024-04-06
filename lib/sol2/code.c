@@ -14,40 +14,10 @@
 
 #endif
 
-#define goto_pixel(I, J) gotoxy(2 + 2 * (J), 3 + (I));
+#define goto_pixel(I, J)    gotoxy(2 + 2 * (J), 3 + (I));
 
 bool compare = false;
 char *global;
-
-clock_t largest = 0;
-
-
-FILE *fp_global = NULL;
-void save(clock_t start, clock_t end, int N, line_info_p l)
-{
-    clock_t diff = end - start;
-    if(diff <= largest) return;
-    largest = diff;
-
-    if(fp_global == NULL)
-    {
-        fp_global = fopen("out.txt", "w");
-        assert(fp_global);
-
-        setbuf(fp_global, NULL);
-    }
-
-    fprintf(fp_global, "\n");
-    fprintf(fp_global, "\ndiff: %lu", diff);
-
-    int_vec_t bars = l->bars;
-    fprintf(fp_global, "\nn: %d", bars.n);
-    fprintf(fp_global, "\nbars: ");
-    for(int i=0; i<bars.n; i++)
-        fprintf(fp_global, "%d ", bars.arr[i]);
-
-    fbit_arr_display(fp_global, N, l->filter.arr);
-}
 
 void solution_read(char name[])
 {
@@ -69,14 +39,20 @@ void solution_read(char name[])
 
 
 
+// #define ALTERNATE
+
 void table_display(table_p t)
 {
+#ifndef ALTERNATE
+
     for(int i=0; i<t->N; i++)
     {
         goto_pixel(i, t->N + 1);
         printf("%3d", i);
     }
     goto_pixel(-2,0)
+
+#endif
 
     bit_m_display(t->N, t->res);
 }
@@ -205,37 +181,26 @@ bool line_approve(int N, char line[], char filter[])
 
 
 
-bool line_next_fit(int i, int N, char line[], int places[], line_info_p l)
+bool line_next_bar_rec(int moved[], int i, int N, char line[], int places[], line_info_p l)
 {
+    if(i < 0) return false;
+    
     int n = l->bars.n;
-    int _places[n+1];
-    int_arr_set(n+1, _places, places);
-
     int bar = l->bars.arr[i];
     int max = places[i+1] - bar;
 
-    for(int place=places[i]+1; place<max; place++)
+    for(int place = places[i] + 1; place < max; place++)
     {
-        _places[i] = place;
-        line_set_bar(N, line, place, bar, true);
-        if(line_approve(N, line, l->filter.arr))
-            return int_arr_set(n+1, places, _places);
-    }
+        places[i] = place;
+        line_fill(N, line, n, places, l->bars.arr);
+        
+        int diff = line_verify(N, line, l->filter.arr);
+        if(diff >= place)
+            continue;
 
-    return false;
-}
-
-bool line_next_bar_rec(int moved[], int i, int N, char line[], int places[], line_info_p l)
-{
-    int n = l->bars.n;
-    if(i < 0) return false;
-
-    while(line_next_fit(i, N, line, places, l))
-    {
         moved[i] = 1;
 
-        line_fill(N, line, n, places, l->bars.arr);
-        if(line_approve(N, line, l->filter.arr))
+        if(diff < 0) 
             return true;
 
         if(line_next_bar_rec(moved, i-1, N, line, places, l))
@@ -314,8 +279,6 @@ bool line_next(int N, char line[], int places[], line_info_p l)
 
 bool line_info_scan(int N, char line[], line_info_p l)
 {
-    clock_t start = clock();
-
     int n = l->bars.n;
     int rem = l->filter.n;
 
@@ -332,12 +295,7 @@ bool line_info_scan(int N, char line[], line_info_p l)
             line[i] = -1;
             rem--;
 
-            if(rem == 0)
-            {
-                clock_t end = clock();
-                save(start, end, N, l);
-                return false;
-            }
+            if(rem == 0) return false;
         }
     }
 
@@ -345,8 +303,6 @@ bool line_info_scan(int N, char line[], line_info_p l)
         if(line[i] == l->filter.arr[i])
             line[i] = -1;
 
-    clock_t end = clock();
-    save(start, end, N, l);
     return true;
 }
 
@@ -354,10 +310,16 @@ bool line_info_scan(int N, char line[], line_info_p l)
 
 void step(table_p t, int i, int j, char val)
 {
+#ifdef ALTERNATE
+
+    table_display(t);
+
+#else
+
     goto_pixel(i, j);
     bit_display(val);
 
-    // table_display(t);
+#endif
 
     // struct timespec spec = (struct timespec){0, 5e7};
     // nanosleep(&spec, NULL);
@@ -392,9 +354,13 @@ bool table_scan_row(table_p t, int i)
 {
     int N = t->N;
 
+#ifndef ALTERNATE
+
     goto_pixel(i, N+5);
     bit_display(-1);
     goto_pixel(i, N+5);
+
+#endif
 
     char set[N];
     if(!line_info_scan(N, set, &t->r[i]))
@@ -407,8 +373,13 @@ bool table_scan_row(table_p t, int i)
             return true;
         
         t->c[j].h = 1;
+
+#ifndef ALTERNATE
+
         goto_pixel(N+5, j);
         bit_display(1);
+
+#endif
     }
 
     return false;
@@ -418,9 +389,13 @@ bool table_scan_column(table_p t, int j)
 {
     int N = t->N;
 
+#ifndef ALTERNATE
+
     goto_pixel(N+5, j);
     bit_display(-1);
     goto_pixel(N+5, j);
+
+#endif
 
     char set[N];
     if(!line_info_scan(N, set, &t->c[j]))
@@ -433,8 +408,13 @@ bool table_scan_column(table_p t, int j)
             return true;
 
         t->r[i].h = 1;
+        
+#ifndef ALTERNATE
+
         goto_pixel(i, N+5);
         bit_display(1);
+    
+#endif
     }
 
     return false;
@@ -467,10 +447,19 @@ bool table_scan(table_p t)
 
 void table_solve(table_p t)
 {
+
+#ifndef ALTERNATE
+
     clrscr();
     table_display(t);
 
+#endif
+
     assert(table_scan(t));
 
+#ifndef ALTERNATE
+    
     goto_pixel(t->N + 6, 0);
+    
+#endif
 }
