@@ -40,6 +40,13 @@ void solution_read(char name[])
 
 void table_display(table_p t)
 {
+    for(int i=0; i<t->N; i++)
+    {
+        goto_pixel(i, t->N + 1);
+        printf("%3d", i);
+    }
+    goto_pixel(-2,0)
+
     bit_m_display(t->N, t->res);
 }
 
@@ -100,7 +107,7 @@ line_info_t line_info_read(FILE *fp, int N)
     int_vec_t _bars = int_vec_create(n, bars);
     bit_vec_t _filter = bit_vec_create(N);
 
-    return (line_info_t){_bars, _filter, n};
+    return (line_info_t){_bars, _filter, 1};
 }
 
 line_info_p line_info_arr_read(FILE *fp, int N)
@@ -126,7 +133,7 @@ void table_read(table_p t, char name[])
     char* res = bit_m_create(N);
 
     int rem = N * N;
-    *t = (table_t){N, l, c, res, rem, NULL};
+    *t = (table_t){N, l, c, res, rem};
 }
 
 
@@ -213,6 +220,26 @@ bool line_next_rec(int moved[], int i, int N, char line[], int places[], line_in
     return line_next_rec(moved, i, N, line, places, l);
 }
 
+void line_init(int N, char line[], int places[], line_info_p l)
+{
+    int n = l->bars.n;
+
+    int j = 0;
+    for(int i=0; i<n; i++)
+    {
+        places[i] = j;
+        j += l->bars.arr[i] + 1;
+    }
+    places[n] = N+1;
+    
+    line_fill(N, line, n, places, l->bars.arr);
+
+    if(line_approve(N, line, l->filter.arr))
+        return;
+    
+    assert(line_next_rec(NULL, 0, N, line, places, l));
+}
+
 bool line_next(int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
@@ -253,27 +280,6 @@ bool line_next(int N, char line[], int places[], line_info_p l)
     
     return false;
 }
-
-void line_init(int N, char line[], int places[], line_info_p l)
-{
-    int n = l->bars.n;
-
-    int j = 0;
-    for(int i=0; i<n; i++)
-    {
-        places[i] = j;
-        j += l->bars.arr[i] + 1;
-    }
-    places[n] = N+1;
-    
-    line_fill(N, line, n, places, l->bars.arr);
-
-    if(line_approve(N, line, l->filter.arr))
-        return;
-    
-    assert(line_next_rec(NULL, 0, N, line, places, l));
-}
-
 
 bool line_info_scan(int N, char line[], line_info_p l)
 {
@@ -317,7 +323,7 @@ void step(table_p t, int i, int j, char val)
 
     // table_display(t);
 
-    // struct timespec spec = (struct timespec){0, 1e8};
+    // struct timespec spec = (struct timespec){0, 5e7};
     // nanosleep(&spec, NULL);
 }
 
@@ -346,64 +352,13 @@ bool table_set(table_p t, int i, int j, char val)
 
 
 
-void scan_display(scan_p s)
-{
-    for(; s; s = s->s)
-        printf("\n%d %d %d", s->n, s->type, s->i);
-}
-
-scan_p scan_create(int n, int type, int i, scan_p s_next)
-{
-    scan_p s = malloc(sizeof(scan_t));
-    assert(s);
-
-    *s = (scan_t){n, type, i, s_next};
-    return s;
-}
-
-void scan_add(scan_p *s, int n, int type, int i)
-{
-    scan_p _s = *s;
-    if(_s == NULL || _s->n > n)
-    {
-        *s = scan_create(n, type, i, _s);
-        return;
-    }
-
-    if(_s->type == type && _s->i == i)
-        return;
-
-    return scan_add(&_s->s, n, type, i);
-}
-
-void table_scan_add(table_p t, int type, int i)
-{
-    line_info_t l;
-    switch (type)
-    {
-        case ROW   : l = t->r[i]; break;
-        case COLUMN: l = t->c[i]; break;
-        default: assert(false);
-    }
-
-    scan_add(&t->s, l.h, type, i);
-}
-
-scan_p table_scan_pop(table_p t)
-{
-    scan_p s = t->s;
-    assert(s);
-    t->s = s->s;
-    return s;
-}
-
-
-
 bool table_scan_row(table_p t, int i)
 {
     int N = t->N;
 
-    goto_pixel(i, N+10);
+    goto_pixel(i, N+5);
+    bit_display(-1);
+    goto_pixel(i, N+5);
 
     char set[N];
     if(!line_info_scan(N, set, &t->r[i]))
@@ -415,7 +370,9 @@ bool table_scan_row(table_p t, int i)
         if(table_set(t, i, j, set[j]))
             return true;
         
-        table_scan_add(t, COLUMN, j);
+        t->c[j].h = 1;
+        goto_pixel(N+5, j);
+        bit_display(1);
     }
 
     return false;
@@ -425,7 +382,9 @@ bool table_scan_column(table_p t, int j)
 {
     int N = t->N;
 
-    goto_pixel(N+10, j);
+    goto_pixel(N+5, j);
+    bit_display(-1);
+    goto_pixel(N+5, j);
 
     char set[N];
     if(!line_info_scan(N, set, &t->c[j]))
@@ -437,7 +396,9 @@ bool table_scan_column(table_p t, int j)
         if(table_set(t, i, j, set[i]))
             return true;
 
-        table_scan_add(t, ROW, i);
+        t->r[i].h = 1;
+        goto_pixel(i, N+5);
+        bit_display(1);
     }
 
     return false;
@@ -445,22 +406,23 @@ bool table_scan_column(table_p t, int j)
 
 bool table_scan(table_p t)
 {
+    int N = t->N;
     while(t->rem)
     {
-        scan_p s = table_scan_pop(t);
-        switch (s->type)
+        for(int i=0; i<N; i++)
+        if(t->r[i].h)
         {
-            case ROW: 
-                if(table_scan_row(t, s->i))
-                    return true;
-            break;
+            t->r[i].h = 0;
+            if(table_scan_row(t, i))
+                return true;
+        }
 
-            case COLUMN: 
-                if(table_scan_column(t, s->i))
-                    return true;
-            break;
-
-            default: assert(false);
+        for(int j=0; j<N; j++)
+        if(t->c[j].h)
+        {
+            t->c[j].h = 0;
+            if(table_scan_column(t, j))
+                return true;
         }
     }
 
@@ -472,13 +434,7 @@ void table_solve(table_p t)
     clrscr();
     table_display(t);
 
-    for(int i=0; i<t->N; i++)
-    {
-        table_scan_add(t, ROW, i);
-        table_scan_add(t, COLUMN, i);
-    }
-
     assert(table_scan(t));
 
-    goto_pixel(t->N + 10, 0);
+    goto_pixel(t->N + 6, 0);
 }
