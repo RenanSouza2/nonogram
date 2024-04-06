@@ -1,46 +1,21 @@
 
 
-diff: 32
-n: 2
-bars: 5 5 
-|                                                                      |
+diff: 8
+n: 1
+bars: 5 
+|                                        |
 
-diff: 61
-n: 4
-bars: 3 1 3 7 
-|                                                                      |
+diff: 9
+n: 3
+bars: 4 4 4 
+|                                        |
 
-diff: 84
-n: 6
-bars: 4 1 1 2 3 6 
-|                                                                      |
+diff: 11
+n: 5
+bars: 4 2 1 2 4 
+|                                        |
 
-diff: 116
-n: 6
-bars: 1 1 3 3 2 2 
-|                                                                      |
-
-diff: 157
+diff: 26
 n: 7
-bars: 2 3 1 2 1 1 1 
-|                                                                      |
-
-diff: 192
-n: 5
-bars: 1 3 1 1 2 
-|                  ██                                                  |
-
-diff: 239
-n: 5
-bars: 1 3 1 1 2 
-|              ██  ██                                                  |
-
-diff: 362
-n: 6
-bars: 2 1 1 1 1 1 
-|              ██                                                      |
-
-diff: 428
-n: 6
-bars: 1 1 1 1 1 1 
-|              ██                                                      |
+bars: 1 1 1 2 1 1 1 
+|                                        |

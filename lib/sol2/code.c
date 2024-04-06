@@ -228,25 +228,21 @@ bool line_next_fit(int i, int N, char line[], int places[], line_info_p l)
 bool line_next_bar_rec(int moved[], int i, int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
-    if(i == n) return false;
+    if(i < 0) return false;
 
     while(line_next_fit(i, N, line, places, l))
     {
         moved[i] = 1;
 
         line_fill(N, line, n, places, l->bars.arr);
-        if(line_verify(N, line, l->filter.arr) < places[i])
+        if(line_approve(N, line, l->filter.arr))
             return true;
-    } 
-    
-    if(!line_next_bar_rec(moved, i+1, N, line, places, l))
-        return false;
-    
-    line_fill(N, line, n, places, l->bars.arr);
-    if(line_verify(N, line, l->filter.arr) < places[i])
-        return true;
-    
-    return line_next_bar_rec(moved, i, N, line, places, l);
+
+        if(line_next_bar_rec(moved, i-1, N, line, places, l))
+            return true;
+    }
+
+    return false;
 }
 
 int line_next_bar(int i, int N, char line[], int places[], line_info_p l)
@@ -281,7 +277,7 @@ void line_init(int N, char line[], int places[], line_info_p l)
     if(line_approve(N, line, l->filter.arr))
         return;
     
-    assert(line_next_bar(0, N, line, places, l));
+    assert(line_next_bar(n-1, N, line, places, l));
 }
 
 bool line_next(int N, char line[], int places[], line_info_p l)
@@ -291,13 +287,14 @@ bool line_next(int N, char line[], int places[], line_info_p l)
     int mov_c = n+1;
     int places_c[n+1];
 
-    for(int i=0; i<n; i++)
+    for(int i=n-1; i>=0; i--)
     {
         int _places[n+1];
         int_arr_set(n+1, _places, places);
 
         int mov = line_next_bar(i, N, line, _places, l);
-        if(mov >= mov_c) continue;
+        if(mov >= mov_c) 
+            continue;
     
         if(mov == 1)
             return int_arr_set(n+1, places, _places);
