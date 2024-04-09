@@ -21,6 +21,7 @@
 
 // #define ALTERNATE
 // #define COMPARE
+// #define DELAY 4e6
 
 #ifdef COMPARE
 
@@ -43,6 +44,7 @@ void solution_read(char name[])
 }
 
 #endif
+
 
 
 void table_display(table_p t)
@@ -91,15 +93,32 @@ line_info_p line_info_arr_create(int N)
     return l;
 }
 
+int_vec_t places_init(int N, int_vec_t bars)
+{
+    int n = bars.n;
+    int _places[n+1];
+    
+    int j = 0;
+    for(int i=0; i<n; i++)
+    {
+        _places[i] = j;
+        j += bars.arr[i] + 1;
+    }
+    _places[n] = N+1;
+
+    return int_vec_create(n+1, _places);
+}
+
 line_info_t line_info_read(FILE *fp, int N)
 {
     int bars[N/2 + 1];
     int n = int_arr_read(bars, fp);
 
     int_vec_t _bars = int_vec_create(n, bars);
+    int_vec_t _places = places_init(N, _bars);
     bit_vec_t _filter = bit_vec_create(N);
 
-    return (line_info_t){_bars, _filter, 1};
+    return (line_info_t){_bars, _places, _filter, 1};
 }
 
 line_info_p line_info_arr_read(FILE *fp, int N)
@@ -115,7 +134,7 @@ void table_read(table_p t, char name[])
 {
 #ifdef COMPARE
     
-    solution_read(argv[1]);
+    solution_read(name);
 
 #endif
 
@@ -162,18 +181,27 @@ bool line_approve(int N, char line[], char filter[])
 
 
 
-bool line_next_bar_rec(int moved[], int i, int N, char line[], int places[], line_info_p l)
-{
+bool line_next_bar_rec(
+    int moved[], 
+    int i, 
+    int N, 
+    char line[], 
+    int places[], 
+    int starter,
+    line_info_p l
+) {
     if(i < 0) return false;
     
     int bar = l->bars.arr[i];
     int max = places[i+1] - bar;
 
-    for(int place = places[i] + 1; place < max; place++)
+    for(int place = places[i] + starter; place < max; place++)
     {
         places[i] = place;
-        line[place-1] = 0;
-        line[place-1+bar] = 1;
+        
+        int _place = place - 1;
+        if(_place >=0) line[_place] = 0;
+        line[_place+bar] = 1;
         
         int diff = line_verify(N, line, l->filter.arr);
         if(diff >= place) continue;
@@ -182,7 +210,7 @@ bool line_next_bar_rec(int moved[], int i, int N, char line[], int places[], lin
 
         if(
             diff < 0 ||
-            line_next_bar_rec(moved, i-1, N, line, places, l)
+            line_next_bar_rec(moved, i-1, N, line, places, starter, l)
         )
             return true;
     }
@@ -190,13 +218,13 @@ bool line_next_bar_rec(int moved[], int i, int N, char line[], int places[], lin
     return false;
 }
 
-int line_next_bar(int i, int N, char line[], int places[], line_info_p l)
+int line_next_bar(int i, int N, char line[], int places[], int starter, line_info_p l)
 {
     int n = l->bars.n;
     int moved[n];
     int_arr_clean(n, moved);
 
-    if(!line_next_bar_rec(moved, i, N, line, places, l))
+    if(!line_next_bar_rec(moved, i, N, line, places, starter, l))
         return n+1;
 
     return int_arr_sum_reduce(n, moved);
@@ -206,19 +234,14 @@ void line_init(int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
 
-    int j = 0;
-    for(int i=0; i<n; i++)
-    {
-        places[i] = j;
-        j += l->bars.arr[i] + 1;
-    }
-    places[n] = N+1;
-    
+    int_arr_set(n+1, places, l->places.arr);
     line_fill(N, line, n, places, l->bars.arr);
     if(line_approve(N, line, l->filter.arr))
         return;
     
-    assert(line_next_bar(n-1, N, line, places, l));
+    assert(line_next_bar(n-1, N, line, places, 0, l));
+
+    int_arr_set(n+1, l->places.arr, places);
 }
 
 bool line_next(int N, char line[], int places[], line_info_p l)
@@ -234,7 +257,7 @@ bool line_next(int N, char line[], int places[], line_info_p l)
         int_arr_set(n+1, _places, places);
 
         line_fill(N, line, n, _places, l->bars.arr);
-        int mov = line_next_bar(i, N, line, _places, l);
+        int mov = line_next_bar(i, N, line, _places, 1, l);
         if(mov >= mov_c) 
             continue;
     
@@ -274,8 +297,8 @@ bool line_info_scan(int N, char line[], line_info_p l)
         if(line[i] != tmp[i])
         {
             line[i] = -1;
-            rem--;
 
+            rem--;
             if(rem == 0) return false;
         }
     }
@@ -301,8 +324,13 @@ void step(table_p t, int i, int j, char val)
 
 #endif
 
-    // struct timespec spec = (struct timespec){0, 4e6};
-    // nanosleep(&spec, NULL);
+
+#ifdef DELAY
+
+    struct timespec spec = (struct timespec){0, DELAY};
+    nanosleep(&spec, NULL);
+
+#endif
 }
 
 void filter_set(bit_vec_p b, int i, char val)
@@ -331,7 +359,7 @@ void table_row_set_flag(table_p t, int i, char val)
 #ifndef ALTERNATE
 
     goto_pixel(i, t->N+5);
-    bit_display(val);
+    bit_display((val<<1) - 1);
 
 #endif
 }
@@ -343,7 +371,7 @@ void table_column_set_flag(table_p t, int j, char val)
 #ifndef ALTERNATE
 
     goto_pixel(t->N+5, j);
-    bit_display(val);
+    bit_display((val<<1) - 1);
 
 #endif
 }

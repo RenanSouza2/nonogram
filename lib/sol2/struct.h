@@ -18,6 +18,7 @@ STRUCT(int_vec)
 STRUCT(line_info)
 {
     int_vec_t bars;
+    int_vec_t places;
     bit_vec_t filter;
     int h;
 };
