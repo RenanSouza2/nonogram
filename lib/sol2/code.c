@@ -18,7 +18,12 @@
 
 #define goto_pixel(I, J)    gotoxy(2 + 2 * (J), 3 + (I));
 
-bool compare = false;
+
+// #define ALTERNATE
+// #define COMPARE
+
+#ifdef COMPARE
+
 char *global;
 
 void solution_read(char name[])
@@ -35,10 +40,9 @@ void solution_read(char name[])
         char val = int_read(fp);
         bit_m_set(global, N, i, j, val);
     }
-
-    compare = true;
 }
 
+#endif
 
 
 void table_display(table_p t)
@@ -109,6 +113,12 @@ line_info_p line_info_arr_read(FILE *fp, int N)
 
 void table_read(table_p t, char name[])
 {
+#ifdef COMPARE
+    
+    solution_read(argv[1]);
+
+#endif
+
     char _name[50];
     snprintf(_name, 50, "tables/table%s.txt", name);
     FILE *fp = file_open(_name);
@@ -275,8 +285,6 @@ bool line_info_scan(int N, char line[], line_info_p l)
 
 
 
-// #define ALTERNATE
-
 void step(table_p t, int i, int j, char val)
 {
 #ifndef ALTERNATE
@@ -284,9 +292,12 @@ void step(table_p t, int i, int j, char val)
     goto_pixel(i, j);
     bit_display(val);
 
-#else
+#endif
 
-    table_display(t);
+#ifdef COMPARE
+
+    char _val = bit_m_get(global, t->N, i, j);
+    assert(_val == val);
 
 #endif
 
@@ -302,12 +313,6 @@ void filter_set(bit_vec_p b, int i, char val)
 
 bool table_set(table_p t, int i, int j, char val)
 {
-    if(compare)
-    {
-        char _val = bit_m_get(global, t->N, i, j);
-        assert(_val == val);
-    }
-
     t->rem--;
     bit_m_set(t->res, t->N, i, j, val);
     filter_set(&t->r[i].filter, j, val);
@@ -319,14 +324,36 @@ bool table_set(table_p t, int i, int j, char val)
 
 
 
+void table_row_set_flag(table_p t, int i, char val)
+{
+    t->r[i].h = val;
+
+#ifndef ALTERNATE
+
+    goto_pixel(i, t->N+5);
+    bit_display(val);
+
+#endif
+}
+
+void table_column_set_flag(table_p t, int j, char val)
+{
+    t->c[j].h = val;
+
+#ifndef ALTERNATE
+
+    goto_pixel(t->N+5, j);
+    bit_display(val);
+
+#endif
+}
+
 bool table_scan_row(table_p t, int i)
 {
     int N = t->N;
 
 #ifndef ALTERNATE
 
-    goto_pixel(i, N+5);
-    bit_display(-1);
     goto_pixel(i, N+5);
 
 #endif
@@ -341,15 +368,14 @@ bool table_scan_row(table_p t, int i)
         if(table_set(t, i, j, set[j]))
             return true;
         
-        t->c[j].h = 1;
+        table_column_set_flag(t, j, 1);
+    }
 
-#ifndef ALTERNATE
+#ifdef ALTERNATE
 
-        goto_pixel(N+5, j);
-        bit_display(1);
+    table_display(t);
 
 #endif
-    }
 
     return false;
 }
@@ -360,8 +386,6 @@ bool table_scan_column(table_p t, int j)
 
 #ifndef ALTERNATE
 
-    goto_pixel(N+5, j);
-    bit_display(-1);
     goto_pixel(N+5, j);
 
 #endif
@@ -376,15 +400,14 @@ bool table_scan_column(table_p t, int j)
         if(table_set(t, i, j, set[i]))
             return true;
 
-        t->r[i].h = 1;
-        
-#ifndef ALTERNATE
-
-        goto_pixel(i, N+5);
-        bit_display(1);
-    
-#endif
+        table_row_set_flag(t, i, 1);
     }
+
+#ifdef ALTERNATE
+
+    table_display(t);
+
+#endif
 
     return false;
 }
@@ -397,7 +420,7 @@ bool table_scan(table_p t)
         for(int i=0; i<N; i++)
         if(t->r[i].h)
         {
-            t->r[i].h = 0;
+            table_row_set_flag(t, i, 0);
             if(table_scan_row(t, i))
                 return true;
         }
@@ -405,7 +428,7 @@ bool table_scan(table_p t)
         for(int j=0; j<N; j++)
         if(t->c[j].h)
         {
-            t->c[j].h = 0;
+            table_column_set_flag(t, j, 0);
             if(table_scan_column(t, j))
                 return true;
         }
