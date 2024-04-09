@@ -2,4 +2,4 @@ make clean
 clear
 
 make build
-./src/main.o $1
+time ./src/main.o $1
