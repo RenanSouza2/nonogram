@@ -21,7 +21,7 @@
 
 // #define ALTERNATE
 // #define COMPARE
-// #define DELAY 4e6
+#define DELAY 1e8
 
 #ifdef COMPARE
 
@@ -472,6 +472,11 @@ void table_solve(table_p t)
 
     clrscr();
     table_display(t);
+    for(int i=0; i<t->N; i++)
+    {
+        table_row_set_flag(t, i, 1);
+        table_column_set_flag(t, i, 1);
+    }
 
 #endif
 
@@ -479,7 +484,16 @@ void table_solve(table_p t)
 
 #ifndef ALTERNATE
     
+    for(int i=0; i<t->N; i++)
+    {
+        table_row_set_flag(t, i, 0);
+        table_column_set_flag(t, i, 0);
+    }
     goto_pixel(t->N + 6, 0);
     
+#else
+
+    table_display(t);
+
 #endif
 }
