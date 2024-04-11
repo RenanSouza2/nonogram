@@ -173,12 +173,14 @@ bit_p bit_arr_create(int n)
 {
     bit_p b = malloc(n);
     assert(b);
+
+    memset(b, -1, n);
     return b;
 }
 
 
 
-char bit_m_get(bit_t c[], int n, int i, int j)
+bit_t bit_m_get(bit_t c[], int n, int i, int j)
 {
     return c[i * n + j];
 }
@@ -190,7 +192,7 @@ void bit_m_set(bit_t c[], int n, int i, int j, bit_t val)
 
 
 
-FILE* file_open(bit_t name[])
+FILE* file_open(char name[])
 {
     FILE *fp = fopen(name, "r");
     assert(fp);
@@ -220,14 +222,4 @@ int int_arr_read(int bars[], FILE *fp)
         if(char_read(fp) == '\n')
             return n + 1;
     }
-}
-
-bit_p bit_m_create(int n)
-{
-    size_t size = n * n;
-    char *c = malloc(size);
-    assert(c);
-
-    memset(c, -1, size);
-    return c;
 }

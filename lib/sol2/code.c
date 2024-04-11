@@ -59,10 +59,7 @@ void table_display(table_p t)
 
 bit_vec_t bit_vec_create(int n)
 {
-    bit_p b = malloc(n);
-    assert(b);
-    memset(b, -1, n);
-
+    bit_p b = bit_arr_create(n);
     return (bit_vec_t){n, b};
 }
 
@@ -149,7 +146,7 @@ void table_read(table_p t, char name[])
     char_read(fp);
     line_info_p l = line_info_arr_read(fp, N);
     line_info_p c = line_info_arr_read(fp, N);
-    bit_p res = bit_m_create(N);
+    bit_p res = bit_arr_create(rem);
 
     *t = (table_t){N, rem, l, c, res};
 }
