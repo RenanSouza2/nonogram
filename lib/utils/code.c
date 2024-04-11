@@ -113,10 +113,10 @@ void fbit_display(FILE *fp, char c)
 
 void fbit_arr_display(FILE *fp, int N, char c[])
 {
-    fprintf(fp, "\n|");
+    fprintf(fp, "\n│");
     for(int i=0; i<N; i++)
         fbit_display(fp, c[i]);
-    fprintf(fp, "|");
+    fprintf(fp, "│");
 }
 
 void bit_display(char c)
