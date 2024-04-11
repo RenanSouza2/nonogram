@@ -132,11 +132,9 @@ line_info_p line_info_arr_read(FILE *fp, int N)
 
 void table_read(table_p t, char name[])
 {
-#ifdef COMPARE
-    
+    #ifdef COMPARE
     solution_read(name);
-
-#endif
+    #endif
 
     char _name[50];
     snprintf(_name, 50, "tables/table%s.txt", name);
@@ -310,27 +308,20 @@ bool line_info_scan(int N, char line[], line_info_p l)
 
 void step(table_p t, int i, int j, char val)
 {
-#ifndef ALTERNATE
-
+    #ifndef ALTERNATE
     goto_pixel(i, j);
     bit_display(val);
+    #endif
 
-#endif
-
-#ifdef COMPARE
-
+    #ifdef COMPARE
     char _val = bit_m_get(global, t->N, i, j);
     assert(_val == val);
+    #endif
 
-#endif
-
-
-#ifdef DELAY
-
+    #ifdef DELAY
     struct timespec spec = (struct timespec){0, DELAY};
     nanosleep(&spec, NULL);
-
-#endif
+    #endif
 }
 
 void filter_set(bit_vec_p b, int i, char val)
@@ -356,35 +347,29 @@ void table_row_set_flag(table_p t, int i, char val)
 {
     t->r[i].h = val;
 
-#ifndef ALTERNATE
-
+    #ifndef ALTERNATE
     goto_pixel(i, t->N+5);
     bit_display((val<<1) - 1);
-
-#endif
+    #endif
 }
 
 void table_column_set_flag(table_p t, int j, char val)
 {
     t->c[j].h = val;
 
-#ifndef ALTERNATE
-
+    #ifndef ALTERNATE
     goto_pixel(t->N+5, j);
     bit_display((val<<1) - 1);
-
-#endif
+    #endif
 }
 
 bool table_scan_row(table_p t, int i)
 {
     int N = t->N;
 
-#ifndef ALTERNATE
-
+    #ifndef ALTERNATE
     goto_pixel(i, N+5);
-
-#endif
+    #endif
 
     char set[N];
     if(!line_info_scan(N, set, &t->r[i]))
@@ -399,11 +384,9 @@ bool table_scan_row(table_p t, int i)
         table_column_set_flag(t, j, 1);
     }
 
-#ifdef ALTERNATE
-
+    #ifdef ALTERNATE
     table_display(t);
-
-#endif
+    #endif
 
     return false;
 }
@@ -412,11 +395,9 @@ bool table_scan_column(table_p t, int j)
 {
     int N = t->N;
 
-#ifndef ALTERNATE
-
+    #ifndef ALTERNATE
     goto_pixel(N+5, j);
-
-#endif
+    #endif
 
     char set[N];
     if(!line_info_scan(N, set, &t->c[j]))
@@ -431,11 +412,9 @@ bool table_scan_column(table_p t, int j)
         table_row_set_flag(t, i, 1);
     }
 
-#ifdef ALTERNATE
-
+    #ifdef ALTERNATE
     table_display(t);
-
-#endif
+    #endif
 
     return false;
 }
@@ -478,11 +457,9 @@ void table_solve(table_p t)
         table_column_set_flag(t, i, 1);
     }
 
-#endif
-
+    #endif
     assert(table_scan(t));
-
-#ifndef ALTERNATE
+    #ifndef ALTERNATE
     
     for(int i=0; i<t->N; i++)
     {
@@ -491,9 +468,7 @@ void table_solve(table_p t)
     }
     goto_pixel(t->N + 6, 0);
     
-#else
-
+    #else
     table_display(t);
-
-#endif
+    #endif
 }
