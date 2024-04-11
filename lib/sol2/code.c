@@ -14,9 +14,17 @@
 
 #endif
 
-#define goto_pixel(I, J) gotoxy(2 + 2 * (J), 3 + (I));
 
-bool compare = false;
+
+#define goto_pixel(I, J)    gotoxy(2 + 2 * (J), 3 + (I));
+
+
+// #define ALTERNATE
+// #define COMPARE
+// #define DELAY 1e8
+
+#ifdef COMPARE
+
 char *global;
 
 void solution_read(char name[])
@@ -33,20 +41,14 @@ void solution_read(char name[])
         char val = int_read(fp);
         bit_m_set(global, N, i, j, val);
     }
-
-    compare = true;
 }
+
+#endif
+
 
 
 void table_display(table_p t)
 {
-    for(int i=0; i<t->N; i++)
-    {
-        goto_pixel(i, t->N + 1);
-        printf("%3d", i);
-    }
-    goto_pixel(-2,0)
-
     bit_m_display(t->N, t->res);
 }
 
@@ -72,14 +74,6 @@ bool int_arr_set(int n, int arr1[], int arr2[])
     return true;
 }
 
-void bit_arr_set(int n, char b[], int i, char val)
-{
-    if(i <  0) return;
-    if(n <= i) return;
-
-    b[i] = val;
-}
-
 int_vec_t int_vec_create(int n, int arr[])
 {
     size_t size = n * sizeof(int);
@@ -99,15 +93,32 @@ line_info_p line_info_arr_create(int N)
     return l;
 }
 
+int_vec_t places_init(int N, int_vec_t bars)
+{
+    int n = bars.n;
+    int _places[n+1];
+    
+    int j = 0;
+    for(int i=0; i<n; i++)
+    {
+        _places[i] = j;
+        j += bars.arr[i] + 1;
+    }
+    _places[n] = N+1;
+
+    return int_vec_create(n+1, _places);
+}
+
 line_info_t line_info_read(FILE *fp, int N)
 {
     int bars[N/2 + 1];
     int n = int_arr_read(bars, fp);
 
     int_vec_t _bars = int_vec_create(n, bars);
+    int_vec_t _places = places_init(N, _bars);
     bit_vec_t _filter = bit_vec_create(N);
 
-    return (line_info_t){_bars, _filter, 1};
+    return (line_info_t){_bars, _places, _filter, 1};
 }
 
 line_info_p line_info_arr_read(FILE *fp, int N)
@@ -121,6 +132,10 @@ line_info_p line_info_arr_read(FILE *fp, int N)
 
 void table_read(table_p t, char name[])
 {
+    #ifdef COMPARE
+    solution_read(name);
+    #endif
+
     char _name[50];
     snprintf(_name, 50, "tables/table%s.txt", name);
     FILE *fp = file_open(_name);
@@ -138,29 +153,20 @@ void table_read(table_p t, char name[])
 
 
 
-void line_set_bar(int N, char line[], int place, int size, bool clean)
-{
-    if(clean) memset(line, -1, N);
-    memset(&line[place], 1, size);
-    bit_arr_set(N, line, place - 1, 0);
-    bit_arr_set(N, line, place + size, 0);
-}
-
 void line_fill(int N, char line[], int n, int places[], int bars[])
 {
     memset(line, 0, N);
-
     for(int i=0; i<n; i++)
-        line_set_bar(N, line, places[i], bars[i], false);
+        memset(&line[places[i]], 1, bars[i]);
 }
 
 int line_verify(int N, char line[], char filter[])
 {
     for(int i=N-1; i>=0; i--)
     {
-        if(bit_is_valid(line[i]))
         if(bit_is_valid(filter[i]))
-        if(line[i] != filter[i]) return i;
+        if(line[i] != filter[i]) 
+            return i;
     }
 
     return -1;
@@ -173,71 +179,67 @@ bool line_approve(int N, char line[], char filter[])
 
 
 
-bool line_next_fit(int i, int N, char line[], int places[], line_info_p l)
-{
-    int n = l->bars.n;
-    int _places[n+1];
-    int_arr_set(n+1, _places, places);
-
+bool line_next_bar_rec(
+    int moved[], 
+    int i, 
+    int N, 
+    char line[], 
+    int places[], 
+    int starter,
+    line_info_p l
+) {
+    if(i < 0) return false;
+    
     int bar = l->bars.arr[i];
     int max = places[i+1] - bar;
 
-    for(int place=places[i]+1; place<max; place++)
+    for(int place = places[i] + starter; place < max; place++)
     {
-        _places[i] = place;
-        line_set_bar(N, line, place, bar, true);
-        if(line_approve(N, line, l->filter.arr))
-            return int_arr_set(n+1, places, _places);
+        places[i] = place;
+        
+        int _place = place - 1;
+        if(_place >=0) line[_place] = 0;
+        line[_place+bar] = 1;
+        
+        int diff = line_verify(N, line, l->filter.arr);
+        if(diff >= place) continue;
+
+        moved[i] = 1;
+
+        if(
+            diff < 0 ||
+            line_next_bar_rec(moved, i-1, N, line, places, starter, l)
+        )
+            return true;
     }
 
     return false;
 }
 
-bool line_next_rec(int moved[], int i, int N, char line[], int places[], line_info_p l)
+int line_next_bar(int i, int N, char line[], int places[], int starter, line_info_p l)
 {
     int n = l->bars.n;
+    int moved[n];
+    int_arr_clean(n, moved);
 
-    if(i == n)
-        return false;
+    if(!line_next_bar_rec(moved, i, N, line, places, starter, l))
+        return n+1;
 
-    while(line_next_fit(i, N, line, places, l))
-    {
-        if(moved) moved[i] = 1;
-
-        line_fill(N, line, n, places, l->bars.arr);
-        if(line_verify(N, line, l->filter.arr) < places[i])
-            return true;
-    } 
-    
-    if(!line_next_rec(moved, i+1, N, line, places, l))
-        return false;
-    
-    line_fill(N, line, n, places, l->bars.arr);
-
-    if(line_verify(N, line, l->filter.arr) < places[i])
-        return true;
-    
-    return line_next_rec(moved, i, N, line, places, l);
+    return int_arr_sum_reduce(n, moved);
 }
 
 void line_init(int N, char line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
 
-    int j = 0;
-    for(int i=0; i<n; i++)
-    {
-        places[i] = j;
-        j += l->bars.arr[i] + 1;
-    }
-    places[n] = N+1;
-    
+    int_arr_set(n+1, places, l->places.arr);
     line_fill(N, line, n, places, l->bars.arr);
-
     if(line_approve(N, line, l->filter.arr))
         return;
     
-    assert(line_next_rec(NULL, 0, N, line, places, l));
+    assert(line_next_bar(n-1, N, line, places, 0, l));
+
+    int_arr_set(n+1, l->places.arr, places);
 }
 
 bool line_next(int N, char line[], int places[], line_info_p l)
@@ -247,26 +249,18 @@ bool line_next(int N, char line[], int places[], line_info_p l)
     int mov_c = n+1;
     int places_c[n+1];
 
-    for(int i=0; i<n; i++)
+    for(int i=n-1; i>=0; i--)
     {
-        int moved[n];
-        int_arr_clean(n, moved);
-
         int _places[n+1];
         int_arr_set(n+1, _places, places);
-        if(!line_next_rec(moved, i, N, line, _places, l))
-            continue;
-        
-        line_fill(N, line, n, _places, l->bars.arr);
-        if(!line_approve(N, line, l->filter.arr))
-            continue;
 
-        int mov = int_arr_sum_reduce(n, moved);
+        line_fill(N, line, n, _places, l->bars.arr);
+        int mov = line_next_bar(i, N, line, _places, 1, l);
+        if(mov >= mov_c) 
+            continue;
+    
         if(mov == 1)
             return int_arr_set(n+1, places, _places);
-
-        if(mov >= mov_c)
-            continue;
 
         mov_c = mov;
         int_arr_set(n+1, places_c, _places); 
@@ -289,27 +283,23 @@ bool line_info_scan(int N, char line[], line_info_p l)
     int places[n+1];
     line_init(N, line, places, l);
 
+    for(int i=0; i<N; i++)
+        if(bit_is_valid(l->filter.arr[i]))
+            line[i] = -1;
+
     char tmp[N];
     while(line_next(N, tmp, places, l))
     {
         for(int i=0; i<N; i++)
-            if(bit_is_valid(line[i]))
-            if(line[i] != tmp[i])
-            {
-                line[i] = -1;
-                rem--;
-
-                if(rem == 0) 
-                {
-
-                    return false;
-                }
-            }
-    }
-
-    for(int i=0; i<N; i++)
-        if(line[i] == l->filter.arr[i])
+        if(bit_is_valid(line[i]))
+        if(line[i] != tmp[i])
+        {
             line[i] = -1;
+
+            rem--;
+            if(rem == 0) return false;
+        }
+    }
 
     return true;
 }
@@ -318,13 +308,20 @@ bool line_info_scan(int N, char line[], line_info_p l)
 
 void step(table_p t, int i, int j, char val)
 {
+    #ifndef ALTERNATE
     goto_pixel(i, j);
     bit_display(val);
+    #endif
 
-    // table_display(t);
+    #ifdef COMPARE
+    char _val = bit_m_get(global, t->N, i, j);
+    assert(_val == val);
+    #endif
 
-    // struct timespec spec = (struct timespec){0, 5e7};
-    // nanosleep(&spec, NULL);
+    #ifdef DELAY
+    struct timespec spec = (struct timespec){0, DELAY};
+    nanosleep(&spec, NULL);
+    #endif
 }
 
 void filter_set(bit_vec_p b, int i, char val)
@@ -335,12 +332,6 @@ void filter_set(bit_vec_p b, int i, char val)
 
 bool table_set(table_p t, int i, int j, char val)
 {
-    if(compare)
-    {
-        char _val = bit_m_get(global, t->N, i, j);
-        assert(_val == val);
-    }
-
     t->rem--;
     bit_m_set(t->res, t->N, i, j, val);
     filter_set(&t->r[i].filter, j, val);
@@ -352,13 +343,33 @@ bool table_set(table_p t, int i, int j, char val)
 
 
 
+void table_row_set_flag(table_p t, int i, char val)
+{
+    t->r[i].h = val;
+
+    #ifndef ALTERNATE
+    goto_pixel(i, t->N+5);
+    bit_display((val<<1) - 1);
+    #endif
+}
+
+void table_column_set_flag(table_p t, int j, char val)
+{
+    t->c[j].h = val;
+
+    #ifndef ALTERNATE
+    goto_pixel(t->N+5, j);
+    bit_display((val<<1) - 1);
+    #endif
+}
+
 bool table_scan_row(table_p t, int i)
 {
     int N = t->N;
 
+    #ifndef ALTERNATE
     goto_pixel(i, N+5);
-    bit_display(-1);
-    goto_pixel(i, N+5);
+    #endif
 
     char set[N];
     if(!line_info_scan(N, set, &t->r[i]))
@@ -370,10 +381,12 @@ bool table_scan_row(table_p t, int i)
         if(table_set(t, i, j, set[j]))
             return true;
         
-        t->c[j].h = 1;
-        goto_pixel(N+5, j);
-        bit_display(1);
+        table_column_set_flag(t, j, 1);
     }
+
+    #ifdef ALTERNATE
+    table_display(t);
+    #endif
 
     return false;
 }
@@ -382,9 +395,9 @@ bool table_scan_column(table_p t, int j)
 {
     int N = t->N;
 
+    #ifndef ALTERNATE
     goto_pixel(N+5, j);
-    bit_display(-1);
-    goto_pixel(N+5, j);
+    #endif
 
     char set[N];
     if(!line_info_scan(N, set, &t->c[j]))
@@ -396,10 +409,12 @@ bool table_scan_column(table_p t, int j)
         if(table_set(t, i, j, set[i]))
             return true;
 
-        t->r[i].h = 1;
-        goto_pixel(i, N+5);
-        bit_display(1);
+        table_row_set_flag(t, i, 1);
     }
+
+    #ifdef ALTERNATE
+    table_display(t);
+    #endif
 
     return false;
 }
@@ -412,7 +427,7 @@ bool table_scan(table_p t)
         for(int i=0; i<N; i++)
         if(t->r[i].h)
         {
-            t->r[i].h = 0;
+            table_row_set_flag(t, i, 0);
             if(table_scan_row(t, i))
                 return true;
         }
@@ -420,7 +435,7 @@ bool table_scan(table_p t)
         for(int j=0; j<N; j++)
         if(t->c[j].h)
         {
-            t->c[j].h = 0;
+            table_column_set_flag(t, j, 0);
             if(table_scan_column(t, j))
                 return true;
         }
@@ -431,10 +446,29 @@ bool table_scan(table_p t)
 
 void table_solve(table_p t)
 {
+
+#ifndef ALTERNATE
+
     clrscr();
     table_display(t);
+    for(int i=0; i<t->N; i++)
+    {
+        table_row_set_flag(t, i, 1);
+        table_column_set_flag(t, i, 1);
+    }
 
+    #endif
     assert(table_scan(t));
-
+    #ifndef ALTERNATE
+    
+    for(int i=0; i<t->N; i++)
+    {
+        table_row_set_flag(t, i, 0);
+        table_column_set_flag(t, i, 0);
+    }
     goto_pixel(t->N + 6, 0);
+    
+    #else
+    table_display(t);
+    #endif
 }
