@@ -4,24 +4,20 @@
 #include "header.h"
 #include "../utils/struct.h"
 
+typedef int * int_p;
+
 STRUCT(bit_vec)
 {
     int n;
     bit_p arr;
 };
 
-STRUCT(int_vec)
-{
-    int n;
-    int *arr;
-};
-
 STRUCT(line_info)
 {
-    int_vec_t bars;
-    int_vec_t places;
-    bit_vec_t filter;
-    int h;
+    int n, h;
+    int_p bars;
+    int_p places;
+    bit_p filter;
 };
 
 STRUCT(table)
