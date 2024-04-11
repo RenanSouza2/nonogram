@@ -16,7 +16,10 @@
 
 
 
-#define goto_pixel(I, J)    gotoxy(2 + 2 * (J), 3 + (I));
+#define clrscr() printf("\e[1;1H\e[2J")
+#define gotoxy(x,y) printf("\033[%d;%dH", (y), (x))
+#define goto_pixel(I, J) gotoxy(2 + 2 * (J), 3 + (I));
+
 
 
 // #define ALTERNATE
@@ -25,7 +28,7 @@
 
 #ifdef COMPARE
 
-char *global;
+bit_p global;
 
 void solution_read(char name[])
 {
@@ -38,7 +41,7 @@ void solution_read(char name[])
     for(int i=0; i<N; i++)
     for(int j=0; j<N; j++)
     {
-        char val = int_read(fp);
+        bit_t val = int_read(fp);
         bit_m_set(global, N, i, j, val);
     }
 }
@@ -56,11 +59,11 @@ void table_display(table_p t)
 
 bit_vec_t bit_vec_create(int n)
 {
-    char *c = malloc(n);
-    assert(c);
-    memset(c, -1, n);
+    bit_p b = malloc(n);
+    assert(b);
+    memset(b, -1, n);
 
-    return (bit_vec_t){n, c};
+    return (bit_vec_t){n, b};
 }
 
 void int_arr_clean(int n, int arr[])
@@ -141,26 +144,26 @@ void table_read(table_p t, char name[])
     FILE *fp = file_open(_name);
 
     int N = int_read(fp);
-    char_read(fp);
+    int rem = N * N;
 
+    char_read(fp);
     line_info_p l = line_info_arr_read(fp, N);
     line_info_p c = line_info_arr_read(fp, N);
-    char* res = bit_m_create(N);
+    bit_p res = bit_m_create(N);
 
-    int rem = N * N;
-    *t = (table_t){N, l, c, res, rem};
+    *t = (table_t){N, rem, l, c, res};
 }
 
 
 
-void line_fill(int N, char line[], int n, int places[], int bars[])
+void line_fill(int N, bit_t line[], int n, int places[], int bars[])
 {
     memset(line, 0, N);
     for(int i=0; i<n; i++)
         memset(&line[places[i]], 1, bars[i]);
 }
 
-int line_verify(int N, char line[], char filter[])
+int line_verify(int N, bit_t line[], bit_t filter[])
 {
     for(int i=N-1; i>=0; i--)
     {
@@ -172,7 +175,7 @@ int line_verify(int N, char line[], char filter[])
     return -1;
 }
 
-bool line_approve(int N, char line[], char filter[])
+bool line_approve(int N, bit_t line[], bit_t filter[])
 {
     return line_verify(N, line, filter) < 0;
 }
@@ -183,7 +186,7 @@ bool line_next_bar_rec(
     int moved[], 
     int i, 
     int N, 
-    char line[], 
+    bit_t line[], 
     int places[], 
     int starter,
     line_info_p l
@@ -216,7 +219,7 @@ bool line_next_bar_rec(
     return false;
 }
 
-int line_next_bar(int i, int N, char line[], int places[], int starter, line_info_p l)
+int line_next_bar(int i, int N, bit_t line[], int places[], int starter, line_info_p l)
 {
     int n = l->bars.n;
     int moved[n];
@@ -228,7 +231,7 @@ int line_next_bar(int i, int N, char line[], int places[], int starter, line_inf
     return int_arr_sum_reduce(n, moved);
 }
 
-void line_init(int N, char line[], int places[], line_info_p l)
+void line_init(int N, bit_t line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
 
@@ -242,7 +245,7 @@ void line_init(int N, char line[], int places[], line_info_p l)
     int_arr_set(n+1, l->places.arr, places);
 }
 
-bool line_next(int N, char line[], int places[], line_info_p l)
+bool line_next(int N, bit_t line[], int places[], line_info_p l)
 {
     int n = l->bars.n;
 
@@ -275,7 +278,7 @@ bool line_next(int N, char line[], int places[], line_info_p l)
     return false;
 }
 
-bool line_info_scan(int N, char line[], line_info_p l)
+bool line_info_scan(int N, bit_t line[], line_info_p l)
 {
     int n = l->bars.n;
     int rem = l->filter.n;
@@ -287,7 +290,7 @@ bool line_info_scan(int N, char line[], line_info_p l)
         if(bit_is_valid(l->filter.arr[i]))
             line[i] = -1;
 
-    char tmp[N];
+    bit_t tmp[N];
     while(line_next(N, tmp, places, l))
     {
         for(int i=0; i<N; i++)
@@ -306,7 +309,7 @@ bool line_info_scan(int N, char line[], line_info_p l)
 
 
 
-void step(table_p t, int i, int j, char val)
+void step(table_p t, int i, int j, bit_t val)
 {
     #ifndef ALTERNATE
     goto_pixel(i, j);
@@ -314,7 +317,7 @@ void step(table_p t, int i, int j, char val)
     #endif
 
     #ifdef COMPARE
-    char _val = bit_m_get(global, t->N, i, j);
+    bit_t _val = bit_m_get(global, t->N, i, j);
     assert(_val == val);
     #endif
 
@@ -324,13 +327,13 @@ void step(table_p t, int i, int j, char val)
     #endif
 }
 
-void filter_set(bit_vec_p b, int i, char val)
+void filter_set(bit_vec_p b, int i, bit_t val)
 {
     b->arr[i] = val;
     b->n--;
 }
 
-bool table_set(table_p t, int i, int j, char val)
+bool table_set(table_p t, int i, int j, bit_t val)
 {
     t->rem--;
     bit_m_set(t->res, t->N, i, j, val);
@@ -446,9 +449,7 @@ bool table_scan(table_p t)
 
 void table_solve(table_p t)
 {
-
-#ifndef ALTERNATE
-
+    #ifndef ALTERNATE
     clrscr();
     table_display(t);
     for(int i=0; i<t->N; i++)
@@ -456,18 +457,17 @@ void table_solve(table_p t)
         table_row_set_flag(t, i, 1);
         table_column_set_flag(t, i, 1);
     }
-
     #endif
+
     assert(table_scan(t));
+
     #ifndef ALTERNATE
-    
     for(int i=0; i<t->N; i++)
     {
         table_row_set_flag(t, i, 0);
         table_column_set_flag(t, i, 0);
     }
     goto_pixel(t->N + 6, 0);
-    
     #else
     table_display(t);
     #endif

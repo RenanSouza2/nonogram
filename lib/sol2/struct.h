@@ -2,11 +2,12 @@
 #define __SOL2_STRUCT_H__
 
 #include "header.h"
+#include "../utils/struct.h"
 
 STRUCT(bit_vec)
 {
     int n;
-    char *arr;
+    bit_p arr;
 };
 
 STRUCT(int_vec)
@@ -25,14 +26,12 @@ STRUCT(line_info)
 
 STRUCT(table)
 {
-    int N;
+    int N, rem;
 
     line_info_p r;
     line_info_p c;
 
-    char* res;
-
-    int rem;
+    bit_p res;
 };
 
 #endif
