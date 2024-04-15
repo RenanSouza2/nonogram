@@ -2,6 +2,8 @@
 #include <string.h>
 #include <time.h>
 
+
+
 #include "debug.h"
 #include "../../utils/assert.h"
 
@@ -15,13 +17,13 @@
 
 
 
-char* bit_arr_init(char str[])
+bit_p bit_arr_init_immed(char str[])
 {
-    int N = strlen(str);
-    char *b = malloc(N);
+    int n = strlen(str);
+    bit_p b = malloc(n);
     assert(b);
 
-    for(int i=0; i<N; i++)
+    for(int i=0; i<n; i++)
         b[i] = str[i] == '0' ? 0 : 1;
 
     return b;
@@ -37,25 +39,29 @@ void int_arr_init_immed(int arr[], int n, ...)
 
 
 
-bool char_test(char c1, char c2)
+bool bit_test(bit_t b1, bit_t b2)
 {
-    if(c1 != c2)
+    if(b1 != b2)
     {
-        printf("\n\n\tCHAR ASSERTION ERROR | %d %d", c1, c2);
+        printf("\n\n\tBIT ASSERTION ERROR | (");
+        bit_display(b1);
+        printf(") (");
+        bit_display(b2);
+        printf(")");
         return false;
     }
 
     return true;
 }
 
-bool bit_arr_test(char b1[], char str[])
+bool bit_arr_test(bit_t b1[], bit_t str[])
 {
-    char *b2 = bit_arr_init(str);
+    bit_p b2 = bit_arr_init_immed(str);
     for(int i=0; i<strlen(str); i++)
     {
-        if(!char_test(b1[i], b2[i]))
+        if(!bit_test(b1[i], b2[i]))
         {
-            printf("\n\tCHAR ARR ASSERTION ERROR | CHAR POS");
+            printf("\n\tBIT ARR ASSERTION ERROR | BIT ERROR %d", i);
             return false;
         }
     }
@@ -98,7 +104,7 @@ bool int_arr_test(int spaces[], int n, ...)
 
 
 
-void fbit_display(FILE *fp, char c)
+void fbit_display(FILE *fp, bit_t c)
 {
     switch (c)
     {
@@ -111,43 +117,43 @@ void fbit_display(FILE *fp, char c)
     assert(false);
 }
 
-void fbit_arr_display(FILE *fp, int N, char c[])
+void fbit_arr_display(FILE *fp, int n, bit_t c[])
 {
-    fprintf(fp, "\n|");
-    for(int i=0; i<N; i++)
+    fprintf(fp, "\n│");
+    for(int i=0; i<n; i++)
         fbit_display(fp, c[i]);
-    fprintf(fp, "|");
+    fprintf(fp, "│");
 }
 
-void bit_display(char c)
+void bit_display(bit_t c)
 {
     fbit_display(stdout, c);
 }
 
-void bit_arr_display(int N, char c[])
+void bit_arr_display(int n, bit_t c[])
 {
-    fbit_arr_display(stdout, N, c);
+    fbit_arr_display(stdout, n, c);
 }
 
-void bit_m_display(int N, char c[])
+void bit_m_display(int n, bit_t c[])
 {
     printf("\n┌");
-    for(int i=0; i<N; i++)
+    for(int i=0; i<n; i++)
         printf("──");
     printf("┐");
 
-    for(int i=0; i<N; i++)
-        bit_arr_display(N, &c[N * i]);
+    for(int i=0; i<n; i++)
+        bit_arr_display(n, &c[n * i]);
 
     printf("\n└");
-    for(int i=0; i<N; i++)
+    for(int i=0; i<n; i++)
         printf("──");
     printf("┘");
 }
 
 
 
-bool bit_is_valid(char b)
+bool bit_is_valid(bit_t b)
 {
     return b >= 0;
 }
@@ -163,23 +169,25 @@ int int_arr_sum_reduce(int n, int arr[])
 
 
 
-char* bit_arr_create(int N)
+bit_p bit_arr_create(int n)
 {
-    char *b = calloc(N, 1);
+    bit_p b = malloc(n);
     assert(b);
+
+    memset(b, -1, n);
     return b;
 }
 
 
 
-char bit_m_get(char *c, int N, int i, int j)
+bit_t bit_m_get(bit_t c[], int n, int i, int j)
 {
-    return c[i * N + j];
+    return c[i * n + j];
 }
 
-void bit_m_set(char *c, int N, int i, int j, char val)
+void bit_m_set(bit_t c[], int n, int i, int j, bit_t val)
 {
-    c[i * N + j] = val;
+    c[i * n + j] = val;
 }
 
 
@@ -214,14 +222,4 @@ int int_arr_read(int bars[], FILE *fp)
         if(char_read(fp) == '\n')
             return n + 1;
     }
-}
-
-char* bit_m_create(int N)
-{
-    size_t size = N * N;
-    char *c = malloc(size);
-    assert(c);
-
-    memset(c, -1, size);
-    return c;
 }

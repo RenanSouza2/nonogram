@@ -2,37 +2,32 @@
 #define __SOL2_STRUCT_H__
 
 #include "header.h"
+#include "../utils/struct.h"
+
+typedef int * int_p;
 
 STRUCT(bit_vec)
 {
     int n;
-    char *arr;
-};
-
-STRUCT(int_vec)
-{
-    int n;
-    int *arr;
+    bit_p arr;
 };
 
 STRUCT(line_info)
 {
-    int_vec_t bars;
-    int_vec_t places;
-    bit_vec_t filter;
-    int h;
+    int n, h;
+    int_p bars;
+    int_p places;
+    bit_p filter;
 };
 
 STRUCT(table)
 {
-    int N;
+    int N, rem;
 
     line_info_p r;
     line_info_p c;
 
-    char* res;
-
-    int rem;
+    bit_p res;
 };
 
 #endif

@@ -6,24 +6,24 @@
 
 #include "../../utils/struct.h"
 
-#define clrscr() printf("\e[1;1H\e[2J")
-#define gotoxy(x,y) printf("\033[%d;%dH", (y), (x))
+typedef char bit_t;
+typedef bit_t * bit_p;
 
-PLACEHOLDER(table);
+void fbit_display(FILE *fp, bit_t c);
+void fbit_arr_display(FILE *fp, int n, bit_t c[]);
 
-void fbit_display(FILE *fp, char c);
-void fbit_arr_display(FILE *fp, int N, char c[]);
+void bit_display(bit_t c);
+void bit_arr_display(int n, bit_t c[]);
+void bit_m_display(int n, bit_t c[]);
 
-void bit_display(char c);
-void bit_arr_display(int N, char c[]);
-void bit_m_display(int N, char c[]);
+bit_p bit_arr_create(int n);
 
 int int_arr_read(int bars[], FILE *fp);
-char* bit_m_create(int N);
-char bit_m_get(char *c, int N, int i, int j);
-void bit_m_set(char *c, int N, int i, int j, char val);
+bit_p bit_m_create(int n);
+bit_t bit_m_get(bit_t c[], int n, int i, int j);
+void bit_m_set(bit_t c[], int n, int i, int j, bit_t val);
 
-bool bit_is_valid(char b);
+bool bit_is_valid(bit_t b);
 int int_arr_sum_reduce(int n, int arr[]);
 
 FILE* file_open(char name[]);
