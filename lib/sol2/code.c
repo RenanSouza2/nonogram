@@ -24,7 +24,7 @@
 
 // #define ALTERNATE
 // #define COMPARE
-// #define DELAY 1e8
+// #define DELAY 5e7
 
 #ifdef COMPARE
 

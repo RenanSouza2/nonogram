@@ -39,7 +39,7 @@ void int_arr_init_immed(int arr[], int n, ...)
 
 
 
-bool bit_test(bit_p b1, bit_p b2)
+bool bit_test(bit_t b1, bit_t b2)
 {
     if(b1 != b2)
     {
@@ -54,9 +54,9 @@ bool bit_test(bit_p b1, bit_p b2)
     return true;
 }
 
-bool bit_arr_test(bit_p b1[], bit_p str[])
+bool bit_arr_test(bit_t b1[], bit_t str[])
 {
-    bit_p b2 = bit_arr_init(str);
+    bit_p b2 = bit_arr_init_immed(str);
     for(int i=0; i<strlen(str); i++)
     {
         if(!bit_test(b1[i], b2[i]))
