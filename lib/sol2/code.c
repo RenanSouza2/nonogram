@@ -191,8 +191,9 @@ bool line_next_bar_rec(
 
     for(int place = places[i] + starter; place < max; place++)
     {
+        memset(&line[places[i]], 0, bar);
         places[i] = place;
-        line_fill(N, line, l->n, places, l->bars);
+        memset(&line[place], 1, bar);
         
         int diff = line_verify(N, line, l->filter);
         if(diff >= place)
