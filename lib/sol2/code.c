@@ -22,8 +22,8 @@
 
 
 
-// #define ALTERNATE
-// #define COMPARE
+#define ALTERNATE
+#define COMPARE
 // #define DELAY 5e7
 
 #ifdef COMPARE
@@ -192,10 +192,21 @@ bool line_next_bar_rec(
         
         int _place = place - 1;
         if(_place >=0) line[_place] = 0;
-        line[_place+bar] = 1;
+        memset(&line[place], 1, bar);
         
         int diff = line_verify(N, line, l->filter);
-        if(diff >= place) continue;
+        if(diff >= place)
+        {
+            printf("\nCASE: %d", diff);
+            bit_arr_display(N, l->filter);
+            bit_arr_display(N, line);
+
+            memset(&line[place], 0, bar);
+
+            place = diff - bar * l->filter[diff];
+            
+            continue;
+        }
 
         moved[i] = 1;
 
