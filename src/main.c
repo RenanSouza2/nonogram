@@ -14,8 +14,6 @@ int main(int argc, char **argv)
     table_read(&t, argv[1]);
     table_solve(&t);
 
-    printf("\n%lu", sizeof(table_t));
-    
     printf("\n");
     return 0;
 }
