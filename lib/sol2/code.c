@@ -44,6 +44,9 @@ void solution_read(char name[])
         bit_t val = int_read(fp);
         bit_m_set(global, N, i, j, val);
     }
+
+    printf("\nRes read");
+    bit_m_display(N, global);
 }
 
 #endif
@@ -188,14 +191,16 @@ bool line_next_bar_rec(
 
     for(int place = places[i] + starter; place < max; place++)
     {
+        memset(&line[places[i]], 0, bar);
         places[i] = place;
-        
-        int _place = place - 1;
-        if(_place >=0) line[_place] = 0;
-        line[_place+bar] = 1;
+        memset(&line[place], 1, bar);
         
         int diff = line_verify(N, line, l->filter);
-        if(diff >= place) continue;
+        if(diff >= place)
+        {
+            place = diff - bar * l->filter[diff];
+            continue;
+        }
 
         moved[i] = 1;
 
@@ -205,7 +210,6 @@ bool line_next_bar_rec(
         )
             return true;
     }
-
     return false;
 }
 
@@ -248,8 +252,7 @@ bool line_next(int N, bit_t line[], int places[], line_info_p l)
 
         line_fill(N, line, n, _places, l->bars);
         int mov = line_next_bar(i, N, line, _places, 1, l);
-        if(mov >= mov_c) 
-            continue;
+        if(mov >= mov_c) continue;
     
         if(mov == 1)
             return int_arr_copy(n+1, places, _places);
@@ -420,6 +423,8 @@ bool table_scan(table_p t)
     int N = t->N;
     while(t->rem)
     {
+        int last = t->rem;
+
         for(int i=0; i<N; i++)
         if(t->r[i].h)
         {
@@ -435,6 +440,9 @@ bool table_scan(table_p t)
             if(table_scan_column(t, j))
                 return true;
         }
+
+        if(t->rem == last)
+            return false;
     }
 
     return false;

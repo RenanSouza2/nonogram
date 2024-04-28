@@ -104,38 +104,38 @@ bool int_arr_test(int spaces[], int n, ...)
 
 
 
-void fbit_display(FILE *fp, bit_t c)
+void fbit_display(FILE *fp, bit_t b)
 {
-    switch (c)
+    switch (b)
     {
         case -1: fprintf(fp, "  "); return;
         case  0: fprintf(fp, "░░"); return;
         case  1: fprintf(fp, "██"); return;
     }
     
-    fprintf(fp, "\nINVALID BIT: %d", c);
+    fprintf(fp, "\nINVALID BIT: %d", b);
     assert(false);
 }
 
-void fbit_arr_display(FILE *fp, int n, bit_t c[])
+void fbit_arr_display(FILE *fp, int n, bit_t b[])
 {
     fprintf(fp, "\n│");
     for(int i=0; i<n; i++)
-        fbit_display(fp, c[i]);
+        fbit_display(fp, b[i]);
     fprintf(fp, "│");
 }
 
-void bit_display(bit_t c)
+void bit_display(bit_t b)
 {
-    fbit_display(stdout, c);
+    fbit_display(stdout, b);
 }
 
-void bit_arr_display(int n, bit_t c[])
+void bit_arr_display(int n, bit_t b[])
 {
-    fbit_arr_display(stdout, n, c);
+    fbit_arr_display(stdout, n, b);
 }
 
-void bit_m_display(int n, bit_t c[])
+void bit_m_display(int n, bit_t b[])
 {
     printf("\n┌");
     for(int i=0; i<n; i++)
@@ -143,7 +143,7 @@ void bit_m_display(int n, bit_t c[])
     printf("┐");
 
     for(int i=0; i<n; i++)
-        bit_arr_display(n, &c[n * i]);
+        bit_arr_display(n, &b[n * i]);
 
     printf("\n└");
     for(int i=0; i<n; i++)
