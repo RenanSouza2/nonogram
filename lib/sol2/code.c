@@ -23,20 +23,19 @@
 
 
 // #define ALTERNATE
-#define COMPARE
+// #define COMPARE
 // #define DELAY 5e7
 
 #ifdef COMPARE
 
 bit_p global;
 
-void solution_read(char name[])
+void solution_read(int N, char name[])
 {
     char _name[50];
     snprintf(_name, 50, "res/res%s.txt", name);
     FILE *fp = file_open(_name);
 
-    int N = int_read(fp);
     global = bit_arr_create(N * N);
     for(int i=0; i<N; i++)
     for(int j=0; j<N; j++)
@@ -128,9 +127,6 @@ line_info_p line_info_arr_read(FILE *fp, int N)
 
 void table_read(table_p t, char name[])
 {
-    #ifdef COMPARE
-    solution_read(name);
-    #endif
 
     char _name[50];
     snprintf(_name, 50, "tables/table%s.txt", name);
@@ -138,6 +134,10 @@ void table_read(table_p t, char name[])
 
     int N = int_read(fp);
     int area = N * N;
+
+    #ifdef COMPARE
+    solution_read(N, name);
+    #endif
 
     char_read(fp);
     line_info_p l = line_info_arr_read(fp, N);
@@ -176,11 +176,11 @@ bool line_approve(int N, bit_t line[], bit_t filter[])
 
 
 bool line_next_bar_rec(
-    int moved[], 
-    int i, 
-    int N, 
-    bit_t line[], 
-    int places[], 
+    int moved[],
+    int i,
+    int N,
+    bit_t line[],
+    int places[],
     int starter,
     line_info_p l
 ) {
