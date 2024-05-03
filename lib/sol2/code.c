@@ -23,7 +23,7 @@
 
 
 // #define ALTERNATE
-// #define COMPARE
+#define COMPARE
 // #define DELAY 5e7
 
 #ifdef COMPARE
@@ -137,14 +137,14 @@ void table_read(table_p t, char name[])
     FILE *fp = file_open(_name);
 
     int N = int_read(fp);
-    int rem = N * N;
+    int area = N * N;
 
     char_read(fp);
     line_info_p l = line_info_arr_read(fp, N);
     line_info_p c = line_info_arr_read(fp, N);
-    bit_p res = bit_arr_create(rem);
+    bit_p res = bit_arr_create(area);
 
-    *t = (table_t){N, rem, l, c, res};
+    *t = (table_t){N, l, c, res};
 }
 
 
@@ -306,6 +306,10 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
         if(rem == 0) return false;
     }
 
+    #ifdef ALTERNATE
+    bit_arr_display(N, line);
+    #endif
+
     return true;
 }
 
@@ -329,15 +333,14 @@ void step(table_p t, int i, int j, bit_t val)
     #endif
 }
 
-bool table_set(table_p t, int i, int j, bit_t val)
+int table_set(table_p t, int i, int j, bit_t val)
 {
-    t->rem--;
     bit_m_set(t->res, t->N, i, j, val);
     t->r[i].filter[j] = val;
     t->c[j].filter[i] = val;
 
     step(t, i, j, val);
-    return t->rem == 0;
+    return 1;
 }
 
 
@@ -362,24 +365,19 @@ void table_column_set_flag(table_p t, int j, char val)
     #endif
 }
 
-bool table_scan_row(table_p t, int i)
+int table_scan_row(table_p t, int i)
 {
     int N = t->N;
-
-    #ifndef ALTERNATE
-    goto_pixel(i, N+5);
-    #endif
-
     char set[N];
     if(!line_info_scan(N, set, &t->r[i]))
-        return false;
+        return 0;
 
+    int solved = 0;
     for(int j=0; j<N; j++)
     if(bit_is_valid(set[j]))
     {
-        if(table_set(t, i, j, set[j]))
-            return true;
-        
+        solved++;
+        table_set(t, i, j, set[j]);
         table_column_set_flag(t, j, 1);
     }
 
@@ -387,27 +385,22 @@ bool table_scan_row(table_p t, int i)
     table_display(t);
     #endif
 
-    return false;
+    return solved;
 }
 
-bool table_scan_column(table_p t, int j)
+int table_scan_column(table_p t, int j)
 {
     int N = t->N;
-
-    #ifndef ALTERNATE
-    goto_pixel(N+5, j);
-    #endif
-
     char set[N];
     if(!line_info_scan(N, set, &t->c[j]))
-        return false;
+        return 0;
     
+    int solved = 0;
     for(int i=0; i<N; i++)
     if(bit_is_valid(set[i]))
     {
-        if(table_set(t, i, j, set[i]))
-            return true;
-
+        solved++;
+        table_set(t, i, j, set[i]);
         table_row_set_flag(t, i, 1);
     }
 
@@ -415,37 +408,41 @@ bool table_scan_column(table_p t, int j)
     table_display(t);
     #endif
 
-    return false;
+    return solved;
 }
 
-bool table_scan(table_p t)
+int table_scan(table_p t)
 {
     int N = t->N;
-    while(t->rem)
+    for(int rem = N * N; rem > 0;)
     {
-        int last = t->rem;
+        int last_rem = rem;
 
+        int sum = 0;
         for(int i=0; i<N; i++)
         if(t->r[i].h)
         {
             table_row_set_flag(t, i, 0);
-            if(table_scan_row(t, i))
-                return true;
+            sum += table_scan_row(t, i);
         }
 
+        rem -= sum;
+        if(rem == 0) break;
+
+        sum = 0;
         for(int j=0; j<N; j++)
         if(t->c[j].h)
         {
             table_column_set_flag(t, j, 0);
-            if(table_scan_column(t, j))
-                return true;
+            sum += table_scan_column(t, j);
         }
 
-        if(t->rem == last)
+        rem -= sum;
+        if(rem == last_rem)
             return false;
     }
 
-    return false;
+    return true;
 }
 
 void table_solve(table_p t)
