@@ -64,10 +64,9 @@ void int_arr_clean(int n, int arr[])
     memset(arr, 0, n * sizeof(int));
 }
 
-bool int_arr_copy(int n, int arr1[], int arr2[])
+void int_arr_copy(int n, int arr1[], int arr2[])
 {
     memcpy(arr1, arr2, n * sizeof(int));
-    return true;
 }
 
 int_p int_arr_create(int n, int arr[])
@@ -223,9 +222,11 @@ void line_init(int N, bit_t line[], int places[], line_info_p l)
     int_arr_copy(n+1, l->places, places);
 }
 
-bool line_next(int N, bit_t line[], int places[], line_info_p l)
+int line_next(int N, bit_t line[], int places[], line_info_p l)
 {
     int n = l->n;
+    
+    int i_c; 
     int mov_c = n+1;
     int places_c[n+1];
 
@@ -243,22 +244,27 @@ bool line_next(int N, bit_t line[], int places[], line_info_p l)
             mov += (places[j] != _places[j]);
 
         if(mov == 1)
-            return int_arr_copy(n+1, places, _places);
+        {
+            int_arr_copy(n+1, places, _places);
+            return i;
+        }
 
-        if(mov >= mov_c) 
-            continue;
-
-        mov_c = mov;
-        int_arr_copy(n+1, places_c, _places); 
+        if(mov < mov_c) 
+        {
+            i_c = i;
+            mov_c = mov;
+            int_arr_copy(n+1, places_c, _places);
+        }
     }
 
     if(mov_c < n+1)
     {
         line_fill(N, line, n, places_c, l->bars);
-        return int_arr_copy(n+1, places, places_c);
+        int_arr_copy(n+1, places, places_c);
+        return i_c;
     }
     
-    return false;
+    return -1;
 }
 
 bool line_info_scan(int N, bit_t line[], line_info_p l)
@@ -285,13 +291,18 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
     if(rem == 0) return false;
 
     bit_t tmp[N];
-    while(line_next(N, tmp, places, l))
-    {
+
+    for(
+        int last = line_next(N, tmp, places, l); 
+        last >= 0 ; 
+        last = line_next(N, tmp, places, l)
+    ) {
         #if ALTERNATE > 1
         bit_arr_display(N, tmp);
         #endif
 
-        for(int i=0; i<N; i++)
+        int max = places[last] + l->bars[last];
+        for(int i=0; i<max; i++)
         if(bit_is_valid(line[i]))
         if(line[i] != tmp[i])
         {
