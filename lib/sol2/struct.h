@@ -22,7 +22,7 @@ STRUCT(line_info)
 
 STRUCT(table)
 {
-    int N, rem;
+    int N;
 
     line_info_p r;
     line_info_p c;
