@@ -230,7 +230,7 @@ range_t line_next(int N, bit_t line[], int places[], line_info_p l)
 {
     int n = l->n;
     
-    int i_c; 
+    int i_c, first_c; 
     int mov_c = n+1;
     int places_c[n+1];
 
@@ -258,6 +258,7 @@ range_t line_next(int N, bit_t line[], int places[], line_info_p l)
         if(mov < mov_c) 
         {
             i_c = i;
+            first_c = first;
             mov_c = mov;
             int_arr_copy(n+1, places_c, _places);
         }
@@ -265,9 +266,10 @@ range_t line_next(int N, bit_t line[], int places[], line_info_p l)
 
     if(mov_c < n+1)
     {
+        int min = places[first_c];
         line_fill(N, line, n, places_c, l->bars);
         int_arr_copy(n+1, places, places_c);
-        return (range_t){0, places[i_c] + l->bars[i_c]};
+        return (range_t){min, places[i_c] + l->bars[i_c]};
     }
     
     return (range_t){0, -1};
