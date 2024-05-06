@@ -224,7 +224,7 @@ void line_init(int N, bit_t line[], int places[], line_info_p l)
     int_arr_copy(n+1, l->places, places);
 }
 
-int line_next(int N, bit_t line[], int places[], line_info_p l)
+range_t line_next(int N, bit_t line[], int places[], line_info_p l)
 {
     int n = l->n;
     
@@ -248,7 +248,7 @@ int line_next(int N, bit_t line[], int places[], line_info_p l)
         if(mov == 1)
         {
             int_arr_copy(n+1, places, _places);
-            return places[i] + l->bars[i];
+            return (range_t){0, places[i] + l->bars[i]};
         }
 
         if(mov < mov_c) 
@@ -263,10 +263,10 @@ int line_next(int N, bit_t line[], int places[], line_info_p l)
     {
         line_fill(N, line, n, places_c, l->bars);
         int_arr_copy(n+1, places, places_c);
-        return places[i_c] + l->bars[i_c];
+        return (range_t){0, places[i_c] + l->bars[i_c]};
     }
     
-    return -1;
+    return (range_t){0, -1};
 }
 
 bool line_info_scan(int N, bit_t line[], line_info_p l)
@@ -295,15 +295,15 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
     bit_t tmp[N];
 
     for(
-        int max = line_next(N, tmp, places, l); 
-        max >= 0 ; 
-        max = line_next(N, tmp, places, l)
+        range_t range = line_next(N, tmp, places, l); 
+        range.max >= 0 ; 
+        range = line_next(N, tmp, places, l)
     ) {
         #if ALTERNATE > 1
         bit_arr_display(N, tmp);
         #endif
 
-        for(int i=0; i<max; i++)
+        for(int i=0; i<range.max; i++)
         if(bit_is_valid(line[i]))
         if(line[i] != tmp[i])
         {

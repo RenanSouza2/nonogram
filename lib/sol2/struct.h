@@ -12,7 +12,7 @@ STRUCT(bit_vec)
     bit_p arr;
 };
 
-STRUCT(minmax)
+STRUCT(range)
 {
     short min, max;
 };
