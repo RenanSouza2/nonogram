@@ -26,6 +26,8 @@
 #define COMPARE
 // #define DELAY 5e7
 
+
+
 #ifdef COMPARE
 
 bit_p global;
@@ -246,7 +248,7 @@ int line_next(int N, bit_t line[], int places[], line_info_p l)
         if(mov == 1)
         {
             int_arr_copy(n+1, places, _places);
-            return i;
+            return places[i] + l->bars[i];
         }
 
         if(mov < mov_c) 
@@ -261,7 +263,7 @@ int line_next(int N, bit_t line[], int places[], line_info_p l)
     {
         line_fill(N, line, n, places_c, l->bars);
         int_arr_copy(n+1, places, places_c);
-        return i_c;
+        return places[i_c] + l->bars[i_c];
     }
     
     return -1;
@@ -293,15 +295,14 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
     bit_t tmp[N];
 
     for(
-        int last = line_next(N, tmp, places, l); 
-        last >= 0 ; 
-        last = line_next(N, tmp, places, l)
+        int max = line_next(N, tmp, places, l); 
+        max >= 0 ; 
+        max = line_next(N, tmp, places, l)
     ) {
         #if ALTERNATE > 1
         bit_arr_display(N, tmp);
         #endif
 
-        int max = places[last] + l->bars[last];
         for(int i=0; i<max; i++)
         if(bit_is_valid(line[i]))
         if(line[i] != tmp[i])

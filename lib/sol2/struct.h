@@ -12,6 +12,11 @@ STRUCT(bit_vec)
     bit_p arr;
 };
 
+STRUCT(minmax)
+{
+    short min, max;
+};
+
 STRUCT(line_info)
 {
     int n, h;
