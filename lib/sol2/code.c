@@ -24,7 +24,7 @@
 
 #define ALTERNATE 0
 #define COMPARE
-// #define DELAY 5e7
+// #define DELAY 4e6
 
 
 
@@ -128,7 +128,6 @@ line_info_p line_info_arr_read(FILE *fp, int N)
 
 void table_read(table_p t, char name[])
 {
-
     char _name[50];
     snprintf(_name, 50, "tables/table%s.txt", name);
     FILE *fp = file_open(_name);
@@ -309,7 +308,7 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
         bit_arr_display(N, tmp);
         #endif
 
-        for(int i=0; i<range.max; i++)
+        for(int i=range.min; i<range.max; i++)
         if(bit_is_valid(line[i]))
         if(line[i] != tmp[i])
         {
