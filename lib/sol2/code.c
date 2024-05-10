@@ -181,7 +181,8 @@ short line_move_bar(
     bit_t line[],
     int places[],
     int starter,
-    line_info_p l
+    line_info_p l,
+    int aa[]
 ) {
     if(i < 0) return -1;
     
@@ -204,7 +205,7 @@ short line_move_bar(
         if(diff < 0)
             return i;
         
-        short first = line_move_bar(i-1, N, line, places, starter, l);
+        short first = line_move_bar(i-1, N, line, places, starter, l, aa);
         if(first >= 0)
             return first;
     }
@@ -218,9 +219,10 @@ int line_init(int N, bit_t line[], int places[], line_info_p l, int aa[])
 
     int_arr_copy(n+1, places, l->places);
     line_fill(N, line, n, places, l->bars);
+    int_arr_clean(N+1, aa);
     if(!line_approve(N, line, l->filter))
     {
-        assert(line_move_bar(n-1, N, line, places, 0, l) >= 0);
+        assert(line_move_bar(n-1, N, line, places, 0, l, aa) >= 0);
         int_arr_copy(n+1, l->places, places);
     }
 
@@ -243,7 +245,7 @@ int line_init(int N, bit_t line[], int places[], line_info_p l, int aa[])
     return rem;
 }
 
-range_t line_next(int N, bit_t line[], int places[], line_info_p l)
+range_t line_next(int N, bit_t line[], int places[], line_info_p l, int aa[])
 {
     int n = l->n;
     
@@ -257,7 +259,7 @@ range_t line_next(int N, bit_t line[], int places[], line_info_p l)
         int_arr_copy(n+1, _places, places);
 
         line_fill(N, line, n, _places, l->bars);
-        int first = line_move_bar(i, N, line, _places, 1, l);
+        int first = line_move_bar(i, N, line, _places, 1, l, aa);
         if(first < 0)
             continue;
         
@@ -310,9 +312,9 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
 
     bit_t tmp[N];
     for(
-        range_t range = line_next(N, tmp, places, l); 
+        range_t range = line_next(N, tmp, places, l, aa); 
         range.max >= 0 ; 
-        range = line_next(N, tmp, places, l)
+        range = line_next(N, tmp, places, l, aa)
     ) {
         #if ALTERNATE > 1
         bit_arr_display(N, tmp);
