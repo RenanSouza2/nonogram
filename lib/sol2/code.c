@@ -212,7 +212,7 @@ short line_move_bar(
     return -1;
 }
 
-int line_init(int N, bit_t line[], int places[], line_info_p l)
+int line_init(int N, bit_t line[], int places[], line_info_p l, int aa[])
 {
     int n = l->n;
 
@@ -225,11 +225,20 @@ int line_init(int N, bit_t line[], int places[], line_info_p l)
     }
 
     int rem = N;
+    int next = N+1;
+    aa[N] = next;
     for(int i=0; i<N; i++)
-    if(bit_is_valid(l->filter[i]))
     {
-        rem--;
-        line[i] = -1;
+        if(bit_is_valid(l->filter[i]))
+        {
+            rem--;
+            line[i] = -1;
+        }
+        else
+            next = i;
+
+        aa[i] = i;
+
     }
     return rem;
 }
@@ -294,8 +303,8 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
     #endif
 
     int n = l->n;
-    int places[n+1];
-    int rem = line_init(N, line, places, l);
+    int places[n+1], aa[N+1];
+    int rem = line_init(N, line, places, l, aa);
     if(rem == 0)
         return false;
 
@@ -315,7 +324,7 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
         {
             rem--;
             line[i] = -1;
-            
+
             if(rem == 0)
             {
                 #if ALTERNATE > 1
@@ -324,6 +333,10 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
 
                 return false;
             }
+
+            int next = aa[i+1];
+            for(int j=i; j>=0 && aa[j] == i; j--)
+                aa[j] = next;
         }
         
         #if ALTERNATE > 1
