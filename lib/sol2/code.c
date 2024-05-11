@@ -365,7 +365,7 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
     bit_t tmp[N];
     for(
         range_t range = line_next(N, tmp, places, l, next); 
-        range.max >= 0 ; 
+        range.max >= 0; 
         range = line_next(N, tmp, places, l, next)
     ) {
         #if ALTERNATE > 1
