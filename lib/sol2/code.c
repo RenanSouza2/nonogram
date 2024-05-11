@@ -320,7 +320,7 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
         bit_arr_display(N, tmp);
         #endif
 
-        for(int i=range.min; i<range.max; i++)
+        for(int i=aa[range.min]; i<range.max; i=aa[i+1])
         if(bit_is_valid(line[i]))
         if(line[i] != tmp[i])
         {
