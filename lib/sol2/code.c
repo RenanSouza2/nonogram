@@ -266,7 +266,7 @@ int line_init(int N, bit_t line[], int places[], line_info_p l, int aa[])
     int rem = N;
     int next = N+1;
     aa[N] = next;
-    for(int i=0; i<N; i++)
+    for(int i=N-1; i>=0; i--)
     {
         if(bit_is_valid(l->filter[i]))
         {
@@ -276,8 +276,7 @@ int line_init(int N, bit_t line[], int places[], line_info_p l, int aa[])
         else
             next = i;
 
-        aa[i] = i;
-
+        aa[i] = next;
     }
     return rem;
 }
@@ -374,7 +373,6 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
         #endif
 
         for(int i=aa[range.min]; i<range.max; i=aa[i+1])
-        if(bit_is_valid(line[i]))
         if(line[i] != tmp[i])
         {
             rem--;
