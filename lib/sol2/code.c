@@ -175,6 +175,12 @@ bool line_approve(int N, bit_t line[], bit_t filter[])
 
 
 
+void line_replace_bar(int *place0, int place1, int bar, bit_t line[]) {
+    memset(&line[*place0], 0, bar);
+    *place0 = place1;
+    memset(&line[place1], 1, bar);
+}
+
 short line_move_bar(
     int i,
     int N,
@@ -190,10 +196,7 @@ short line_move_bar(
 
     for(int place = places[i] + starter; place < max; place++)
     {
-        memset(&line[places[i]], 0, bar);
-        places[i] = place;
-        memset(&line[place], 1, bar);
-        
+        line_replace_bar(&places[i], place, bar, line);
         int diff = line_verify(N, line, l->filter);
         if(diff >= place)
         {
@@ -210,6 +213,29 @@ short line_move_bar(
     }
 
     return -1;
+}
+
+void line_move_one(
+    int i,
+    int min,
+    int max,
+    int N,
+    bit_t line[],
+    int places[],
+    line_info_p l
+) {
+    int bar = l->bars[i];
+    while(max - min > 1)
+    {
+        int mid = (min + max) / 2;
+        line_replace_bar(&places[i], mid, bar, line);
+        if(line_approve(N, line, l->filter))
+            min = mid;
+        else
+            max = mid;
+    }
+    if(places[i] != min)
+        line_replace_bar(&places[i], min, bar, line);
 }
 
 int line_init(int N, bit_t line[], int places[], line_info_p l)
@@ -258,6 +284,18 @@ range_t line_next(int N, bit_t line[], int places[], line_info_p l)
 
         if(mov == 1)
         {
+            if(_places[i] - places[i] == 1)
+            {
+                int min = _places[i];
+
+                int bar = l->bars[i];
+                int max1 = _places[i+1] - bar;
+                int max2 = min + bar;
+                int max = (max1 < max2) ? max1 : max2;
+
+                line_move_one(i, min, max, N, line, _places, l);
+            }
+
             int min = places[first];
             int_arr_copy(n+1, places, _places);
             return (range_t){min, places[i] + l->bars[i]};
@@ -306,6 +344,8 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
         range = line_next(N, tmp, places, l)
     ) {
         #if ALTERNATE > 1
+        printf("\n---------");
+        bit_arr_display(N, line);
         bit_arr_display(N, tmp);
         #endif
 
@@ -327,6 +367,7 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
         }
         
         #if ALTERNATE > 1
+        bit_arr_display(N, line);
         printf("\trem: %d", rem);
         #endif
     }
