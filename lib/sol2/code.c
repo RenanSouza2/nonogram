@@ -23,7 +23,7 @@
 
 
 #define ALTERNATE 0
-#define COMPARE
+// #define COMPARE
 // #define DELAY 4e6
 
 
@@ -225,6 +225,10 @@ void line_move_one(
     line_info_p l
 ) {
     int bar = l->bars[i];
+    line_replace_bar(&places[i], max-1, bar, line);
+    if(line_approve(N, line, l->filter))
+        return;
+
     while(max - min > 1)
     {
         int mid = (min + max) / 2;
