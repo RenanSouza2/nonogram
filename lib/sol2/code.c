@@ -54,6 +54,13 @@ void solution_read(int N, char name[])
 
 
 
+void int_arr_display(int n, int arr[])
+{
+    printf("\n");
+    for(int i=0; i<n; i++)
+        printf("%d ", arr[i]);
+}
+
 void table_display(table_p t)
 {
     bit_m_display(t->N, t->res);
@@ -187,7 +194,8 @@ short line_move_bar(
     bit_t line[],
     int places[],
     int starter,
-    line_info_p l
+    line_info_p l,
+    int aa[]
 ) {
     if(i < 0) return -1;
     
@@ -207,7 +215,7 @@ short line_move_bar(
         if(diff < 0)
             return i;
         
-        short first = line_move_bar(i-1, N, line, places, starter, l);
+        short first = line_move_bar(i-1, N, line, places, starter, l, aa);
         if(first >= 0)
             return first;
     }
@@ -242,29 +250,38 @@ void line_move_one(
         line_replace_bar(&places[i], min, bar, line);
 }
 
-int line_init(int N, bit_t line[], int places[], line_info_p l)
+int line_init(int N, bit_t line[], int places[], line_info_p l, int aa[])
 {
     int n = l->n;
 
     int_arr_copy(n+1, places, l->places);
     line_fill(N, line, n, places, l->bars);
+    int_arr_clean(N+1, aa);
     if(!line_approve(N, line, l->filter))
     {
-        assert(line_move_bar(n-1, N, line, places, 0, l) >= 0);
+        assert(line_move_bar(n-1, N, line, places, 0, l, aa) >= 0);
         int_arr_copy(n+1, l->places, places);
     }
 
     int rem = N;
-    for(int i=0; i<N; i++)
-    if(bit_is_valid(l->filter[i]))
+    int next = N+1;
+    aa[N] = next;
+    for(int i=N-1; i>=0; i--)
     {
-        rem--;
-        line[i] = -1;
+        if(bit_is_valid(l->filter[i]))
+        {
+            rem--;
+            line[i] = -1;
+        }
+        else
+            next = i;
+
+        aa[i] = next;
     }
     return rem;
 }
 
-range_t line_next(int N, bit_t line[], int places[], line_info_p l)
+range_t line_next(int N, bit_t line[], int places[], line_info_p l, int aa[])
 {
     int n = l->n;
     
@@ -278,7 +295,7 @@ range_t line_next(int N, bit_t line[], int places[], line_info_p l)
         int_arr_copy(n+1, _places, places);
 
         line_fill(N, line, n, _places, l->bars);
-        int first = line_move_bar(i, N, line, _places, 1, l);
+        int first = line_move_bar(i, N, line, _places, 1, l, aa);
         if(first < 0)
             continue;
         
@@ -294,7 +311,7 @@ range_t line_next(int N, bit_t line[], int places[], line_info_p l)
 
                 int bar = l->bars[i];
                 int max1 = _places[i+1] - bar;
-                int max2 = min + bar;
+                int max2 = aa[min + bar - 1] + 1;
                 int max = (max1 < max2) ? max1 : max2;
 
                 line_move_one(i, min, max, N, line, _places, l);
@@ -336,30 +353,31 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
     #endif
 
     int n = l->n;
-    int places[n+1];
-    int rem = line_init(N, line, places, l);
+    int places[n+1], aa[N+1];
+    int rem = line_init(N, line, places, l, aa);
     if(rem == 0)
         return false;
 
+    #if ALTERNATE > 1
+    bit_arr_display(N, line);
+    #endif
+
     bit_t tmp[N];
     for(
-        range_t range = line_next(N, tmp, places, l); 
+        range_t range = line_next(N, tmp, places, l, aa); 
         range.max >= 0 ; 
-        range = line_next(N, tmp, places, l)
+        range = line_next(N, tmp, places, l, aa)
     ) {
         #if ALTERNATE > 1
-        printf("\n---------");
-        bit_arr_display(N, line);
         bit_arr_display(N, tmp);
         #endif
 
-        for(int i=range.min; i<range.max; i++)
-        if(bit_is_valid(line[i]))
+        for(int i=aa[range.min]; i<range.max; i=aa[i+1])
         if(line[i] != tmp[i])
         {
             rem--;
             line[i] = -1;
-            
+
             if(rem == 0)
             {
                 #if ALTERNATE > 1
@@ -368,10 +386,13 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
 
                 return false;
             }
+
+            int next = aa[i+1];
+            for(int j=i; j>=0 && aa[j] == i; j--)
+                aa[j] = next;
         }
         
         #if ALTERNATE > 1
-        bit_arr_display(N, line);
         printf("\trem: %d", rem);
         #endif
     }
