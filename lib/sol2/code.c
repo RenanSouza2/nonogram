@@ -54,6 +54,13 @@ void solution_read(int N, char name[])
 
 
 
+void int_arr_display(int n, int arr[])
+{
+    printf("\n");
+    for(int i=0; i<n; i++)
+        printf("%d ", arr[i]);
+}
+
 void table_display(table_p t)
 {
     bit_m_display(t->N, t->res);
@@ -305,7 +312,7 @@ range_t line_next(int N, bit_t line[], int places[], line_info_p l, int aa[])
 
                 int bar = l->bars[i];
                 int max1 = _places[i+1] - bar;
-                int max2 = min + bar;
+                int max2 = aa[min + bar - 1] + 1;
                 int max = (max1 < max2) ? max1 : max2;
 
                 line_move_one(i, min, max, N, line, _places, l);
@@ -352,6 +359,10 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
     if(rem == 0)
         return false;
 
+    #if ALTERNATE > 1
+    bit_arr_display(N, line);
+    #endif
+
     bit_t tmp[N];
     for(
         range_t range = line_next(N, tmp, places, l, aa); 
@@ -359,8 +370,6 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
         range = line_next(N, tmp, places, l, aa)
     ) {
         #if ALTERNATE > 1
-        printf("\n---------");
-        bit_arr_display(N, line);
         bit_arr_display(N, tmp);
         #endif
 
@@ -386,7 +395,6 @@ bool line_info_scan(int N, bit_t line[], line_info_p l)
         }
         
         #if ALTERNATE > 1
-        bit_arr_display(N, line);
         printf("\trem: %d", rem);
         #endif
     }
