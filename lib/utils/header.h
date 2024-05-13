@@ -18,8 +18,7 @@ void bit_m_display(int n, bit_t b[]);
 
 bit_p bit_arr_create(int n);
 
-int int_arr_read(int bars[], FILE *fp);
-bit_p bit_m_create(int n);
+int int_arr_read(int max, int bars[], FILE *fp);
 bit_t bit_m_get(bit_t b[], int n, int i, int j);
 void bit_m_set(bit_t b[], int n, int i, int j, bit_t val);
 

@@ -114,8 +114,10 @@ int_p places_init(int N, int n, int bars[])
 
 line_info_t line_info_read(FILE *fp, int N)
 {
-    int _bars[N/2 + 1];
-    int n = int_arr_read(_bars, fp);
+    int max = N/2 + 1;
+    int _bars[max];
+    int n = int_arr_read(max, _bars, fp);
+    assert(n);
 
     int_p bars = int_arr_create(n, _bars);
     int_p places = places_init(N, n, _bars);

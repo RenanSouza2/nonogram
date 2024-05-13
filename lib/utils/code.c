@@ -213,13 +213,15 @@ int int_read(FILE *fp)
     return i;
 }
 
-int int_arr_read(int bars[], FILE *fp)
+int int_arr_read(int max, int bars[], FILE *fp)
 {
-    for(int n=0; ;n++)
+    for(int n=0; n < max;n++)
     {
         bars[n] = int_read(fp);
 
         if(char_read(fp) == '\n')
             return n + 1;
     }
+
+    return 0;
 }
